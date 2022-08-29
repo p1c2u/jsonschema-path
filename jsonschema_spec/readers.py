@@ -1,3 +1,4 @@
+"""JSONSchema spec readers module."""
 from os import path
 from pathlib import Path
 from typing import Any
@@ -5,9 +6,9 @@ from typing import Hashable
 from typing import Mapping
 from typing import Tuple
 
-from openapi_spec.handlers import all_urls_handler
-from openapi_spec.handlers import file_handler
-from openapi_spec.handlers.protocols import SupportsRead
+from jsonschema_spec.handlers import all_urls_handler
+from jsonschema_spec.handlers import file_handler
+from jsonschema_spec.handlers.protocols import SupportsRead
 
 
 class BaseReader:

@@ -1,4 +1,4 @@
-from openapi_spec import Spec
+from jsonschema_spec import Spec
 
 
 class TestSpecFromDict:

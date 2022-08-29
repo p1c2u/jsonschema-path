@@ -1,15 +1,15 @@
-"""OpenAPI spec handlers requests module."""
+"""JSONSchema spec handlers requests module."""
 from contextlib import closing
 from io import StringIO
 from typing import Any
 
 import requests
 
-from openapi_spec.handlers.file import BaseFilePathHandler
+from jsonschema_spec.handlers.file import BaseFilePathHandler
 
 
 class UrlRequestsHandler(BaseFilePathHandler):
-    """OpenAPI spec URL (requests) scheme handler."""
+    """URL (requests) scheme handler."""
 
     def __init__(self, *allowed_schemes: str, **options: Any):
         self.timeout = options.pop("timeout", 10)

@@ -1,3 +1,4 @@
+"""JSONSchema spec accessors module."""
 from collections import deque
 from contextlib import contextmanager
 from typing import Any
@@ -11,7 +12,7 @@ from typing import Union
 from jsonschema.validators import RefResolver
 from pathable.accessors import LookupAccessor
 
-from openapi_spec.utils import is_ref
+from jsonschema_spec.utils import is_ref
 
 
 class SpecAccessor(LookupAccessor):

@@ -1,12 +1,12 @@
-"""OpenAPI spec handlers requests module."""
+"""JSONSchema spec handlers urllib module."""
 from typing import Any
 from urllib.request import urlopen
 
-from openapi_spec.handlers.file import BaseFilePathHandler
+from jsonschema_spec.handlers.file import BaseFilePathHandler
 
 
 class UrllibHandler(BaseFilePathHandler):
-    """OpenAPI spec URL (urllib) scheme handler."""
+    """URL (urllib) scheme handler."""
 
     def __init__(self, *allowed_schemes: str, **options: Any):
         self.timeout = options.pop("timeout", 10)

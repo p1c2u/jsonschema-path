@@ -1,24 +1,24 @@
 ************
-OpenAPI Spec
+JSONSchema Spec
 ************
 
-.. image:: https://img.shields.io/pypi/v/openapi-spec.svg
-     :target: https://pypi.python.org/pypi/openapi-spec
-.. image:: https://travis-ci.org/p1c2u/openapi-spec.svg?branch=master
-     :target: https://travis-ci.org/p1c2u/openapi-spec
-.. image:: https://img.shields.io/codecov/c/github/p1c2u/openapi-spec/master.svg?style=flat
-     :target: https://codecov.io/github/p1c2u/openapi-spec?branch=master
-.. image:: https://img.shields.io/pypi/pyversions/openapi-spec.svg
-     :target: https://pypi.python.org/pypi/openapi-spec
-.. image:: https://img.shields.io/pypi/format/openapi-spec.svg
-     :target: https://pypi.python.org/pypi/openapi-spec
-.. image:: https://img.shields.io/pypi/status/openapi-spec.svg
-     :target: https://pypi.python.org/pypi/openapi-spec
+.. image:: https://img.shields.io/pypi/v/jsonschema-spec.svg
+     :target: https://pypi.python.org/pypi/jsonschema-spec
+.. image:: https://travis-ci.org/p1c2u/jsonschema-spec.svg?branch=master
+     :target: https://travis-ci.org/p1c2u/jsonschema-spec
+.. image:: https://img.shields.io/codecov/c/github/p1c2u/jsonschema-spec/master.svg?style=flat
+     :target: https://codecov.io/github/p1c2u/jsonschema-spec?branch=master
+.. image:: https://img.shields.io/pypi/pyversions/jsonschema-spec.svg
+     :target: https://pypi.python.org/pypi/jsonschema-spec
+.. image:: https://img.shields.io/pypi/format/jsonschema-spec.svg
+     :target: https://pypi.python.org/pypi/jsonschema-spec
+.. image:: https://img.shields.io/pypi/status/jsonschema-spec.svg
+     :target: https://pypi.python.org/pypi/jsonschema-spec
 
 About
 #####
 
-OpenAPI Spec with object-oriented paths
+JSONSchema Spec with object-oriented paths
 
 Key features
 ************
@@ -31,13 +31,13 @@ Installation
 
 ::
 
-    $ pip install openapi-spec
+    $ pip install jsonschema-spec
 
 Alternatively you can download the code and install from the repository:
 
 .. code-block:: bash
 
-   $ pip install -e git+https://github.com/p1c2u/openapi-spec.git#egg=openapi_spec
+   $ pip install -e git+https://github.com/p1c2u/jsonschema-spec.git#egg=jsonschema_spec
 
 
 Usage
@@ -45,7 +45,7 @@ Usage
 
 .. code-block:: python
 
-   from openapi_spec import Spec
+   from jsonschema_spec import Spec
    
    d = {
        "openapi": "3.0.1",

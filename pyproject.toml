@@ -4,13 +4,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 branch = true
-source =["openapi_spec"]
+source =["jsonschema_spec"]
 
 [tool.coverage.xml]
 output = "reports/coverage.xml"
 
 [tool.mypy]
-files = "openapi_spec"
+files = "jsonschema_spec"
 strict = true
 
 [[tool.mypy.overrides]]
@@ -18,14 +18,14 @@ module = "jsonschema.validators"
 ignore_missing_imports = true
 
 [tool.poetry]
-name = "openapi-spec"
+name = "jsonschema-spec"
 version = "0.1.0"
-description = "OpenAPI Spec with object-oriented paths"
+description = "JSONSchema Spec with object-oriented paths"
 authors = ["Artur Maciag <maciag.artur@gmail.com>"]
 license = "Apache License, Version 2.0"
 readme = "README.rst"
-repository = "https://github.com/p1c2u/openapi-spec"
-keywords = ["openapi", "swagger", "spec"]
+repository = "https://github.com/p1c2u/jsonschema-spec"
+keywords = ["jsonschema", "swagger", "spec"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -67,7 +67,7 @@ addopts = """
 --verbose
 --showlocals
 --junitxml=reports/junit.xml
---cov=openapi_spec
+--cov=jsonschema_spec
 --cov-report=term-missing
 --cov-report=xml
 """

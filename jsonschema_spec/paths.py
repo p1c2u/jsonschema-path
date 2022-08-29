@@ -1,3 +1,4 @@
+"""JSONSchema spec paths module."""
 from typing import Any
 from typing import Hashable
 from typing import Mapping
@@ -5,11 +6,11 @@ from typing import Mapping
 from jsonschema.validators import RefResolver
 from pathable.paths import AccessorPath
 
-from openapi_spec.accessors import SpecAccessor
-from openapi_spec.handlers import default_handlers
-from openapi_spec.handlers.protocols import SupportsRead
-from openapi_spec.readers import FilePathReader
-from openapi_spec.readers import FileReader
+from jsonschema_spec.accessors import SpecAccessor
+from jsonschema_spec.handlers import default_handlers
+from jsonschema_spec.handlers.protocols import SupportsRead
+from jsonschema_spec.readers import FilePathReader
+from jsonschema_spec.readers import FileReader
 
 SPEC_SEPARATOR = "#"
 
