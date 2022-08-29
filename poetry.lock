@@ -279,7 +279,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "pathable"
-version = "0.4.1"
+version = "0.4.2"
 description = "Object-oriented paths"
 category = "main"
 optional = false
