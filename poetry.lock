@@ -540,7 +540,7 @@ dev = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "a3fafa02e9f4831aaf0e817b67e9fa775002e032d3960d3869a763d536a18f45"
+content-hash = "216e1707b06312a1fa1ee5f400856d6f2915fee0b020022b093c573d9c59fd02"
 
 [metadata.files]
 astor = []
