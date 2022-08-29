@@ -1,6 +1,6 @@
-************
+***************
 JSONSchema Spec
-************
+***************
 
 .. image:: https://img.shields.io/pypi/v/jsonschema-spec.svg
      :target: https://pypi.python.org/pypi/jsonschema-spec
