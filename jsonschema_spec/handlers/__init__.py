@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING
 
-from openapi_spec.handlers.file import FileHandler
+from jsonschema_spec.handlers.file import FileHandler
 
 if TYPE_CHECKING:
-    from openapi_spec.handlers.requests import UrlRequestsHandler as UrlHandler
+    from jsonschema_spec.handlers.requests import UrlRequestsHandler as UrlHandler
 else:
     try:
-        from openapi_spec.handlers.requests import (
+        from jsonschema_spec.handlers.requests import (
             UrlRequestsHandler as UrlHandler,
         )
     except ImportError:
-        from openapi_spec.handlers.urllib import UrllibHandler as UrlHandler
+        from jsonschema_spec.handlers.urllib import UrllibHandler as UrlHandler
 
 __all__ = ["FileHandler", "UrlHandler"]
 

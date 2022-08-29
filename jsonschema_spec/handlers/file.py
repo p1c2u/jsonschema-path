@@ -1,4 +1,4 @@
-"""OpenAPI spec handlers file module."""
+"""JSONSchema spec handlers file module."""
 from io import StringIO
 from json import dumps
 from json import loads
@@ -11,13 +11,13 @@ from urllib.parse import urlparse
 
 from yaml import load
 
-from openapi_spec.handlers.compat import SafeLoader
-from openapi_spec.handlers.protocols import SupportsRead
-from openapi_spec.handlers.utils import uri_to_path
+from jsonschema_spec.handlers.compat import SafeLoader
+from jsonschema_spec.handlers.protocols import SupportsRead
+from jsonschema_spec.handlers.utils import uri_to_path
 
 
 class FileHandler:
-    """OpenAPI spec file-like object handler."""
+    """File-like object handler."""
 
     def __init__(self, loader: Type[SafeLoader] = SafeLoader):
         self.loader = loader
@@ -31,7 +31,7 @@ class FileHandler:
 
 
 class BaseFilePathHandler(FileHandler):
-    """OpenAPI spec base file path handler."""
+    """Base file path handler."""
 
     allowed_schemes: List[str] = NotImplemented
 
@@ -50,7 +50,7 @@ class BaseFilePathHandler(FileHandler):
 
 
 class FilePathHandler(BaseFilePathHandler):
-    """OpenAPI spec file path handler."""
+    """File path handler."""
 
     allowed_schemes = ["file"]
 
