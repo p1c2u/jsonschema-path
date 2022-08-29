@@ -1,2 +1,0 @@
-# openapi-spec
-OpenAPI spec
