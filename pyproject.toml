@@ -19,7 +19,7 @@ ignore_missing_imports = true
 
 [tool.poetry]
 name = "jsonschema-spec"
-version = "0.1.0"
+version = "0.1.1"
 description = "JSONSchema Spec with object-oriented paths"
 authors = ["Artur Maciag <maciag.artur@gmail.com>"]
 license = "Apache License, Version 2.0"
