@@ -4,7 +4,7 @@ from jsonschema_spec.handlers.file import FileHandler
 from jsonschema_spec.handlers.urllib import UrllibHandler
 
 if TYPE_CHECKING:
-    from jsonschema_spec.handlers.requests import UrllibHandler as UrlHandler
+    from jsonschema_spec.handlers.urllib import UrllibHandler as UrlHandler
 else:
     try:
         from jsonschema_spec.handlers.requests import (
