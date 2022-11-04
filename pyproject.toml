@@ -22,7 +22,7 @@ name = "jsonschema-spec"
 version = "0.1.2"
 description = "JSONSchema Spec with object-oriented paths"
 authors = ["Artur Maciag <maciag.artur@gmail.com>"]
-license = "Apache License, Version 2.0"
+license = "Apache-2.0"
 readme = "README.rst"
 repository = "https://github.com/p1c2u/jsonschema-spec"
 keywords = ["jsonschema", "swagger", "spec"]
@@ -36,7 +36,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Topic :: Software Development :: Libraries"
+    "Topic :: Software Development :: Libraries",
 ]
 
 [tool.poetry.dependencies]
