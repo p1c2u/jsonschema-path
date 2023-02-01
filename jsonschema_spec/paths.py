@@ -42,7 +42,9 @@ class Spec(AccessorPath):
         return cls.from_dict(data, spec_url=spec_url)
 
     @classmethod
-    def from_file(cls: Type[TSpec], fileobj: SupportsRead, spec_url: str = "") -> TSpec:
+    def from_file(
+        cls: Type[TSpec], fileobj: SupportsRead, spec_url: str = ""
+    ) -> TSpec:
         reader = FileReader(fileobj)
         data, _ = reader.read()
         return cls.from_dict(data, spec_url=spec_url)
