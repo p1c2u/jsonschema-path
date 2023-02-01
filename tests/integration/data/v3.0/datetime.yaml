@@ -1,0 +1,17 @@
+openapi: 3.0.0  
+info:  
+  title: Example OpenAPI  
+  version: 0.0.1  
+paths:  
+  /mypath:  
+    get:  
+      parameters:  
+        - name: myparam  
+          in: query  
+          schema:  
+            format: date-time  
+            type: string  
+            example: 1997-07-16T19:20:30.45Z  
+      responses:  
+        '200':  
+          description: Success  
