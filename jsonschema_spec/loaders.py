@@ -24,11 +24,19 @@ class LimitedSafeLoader(type):
     """Meta YAML loader that skips the resolution of the specified YAML tags."""
 
     def __new__(
-        cls, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any], exclude_resolvers: Iterable[str]
+        cls,
+        name: str,
+        bases: Tuple[type, ...],
+        namespace: Dict[str, Any],
+        exclude_resolvers: Iterable[str],
     ) -> "LimitedSafeLoader":
         exclude_resolvers = set(exclude_resolvers)
         implicit_resolvers = {
-            key: [(tag, regex) for tag, regex in mappings if tag not in exclude_resolvers]
+            key: [
+                (tag, regex)
+                for tag, regex in mappings
+                if tag not in exclude_resolvers
+            ]
             for key, mappings in SafeLoader.yaml_implicit_resolvers.items()
         }
         return super().__new__(
@@ -41,6 +49,6 @@ class LimitedSafeLoader(type):
 
 class JsonschemaSafeLoader(
     metaclass=LimitedSafeLoader,
-    exclude_resolvers={"tag:yaml.org,2002:timestamp"}
+    exclude_resolvers={"tag:yaml.org,2002:timestamp"},
 ):
     """A safe YAML loader that leaves timestamps as strings."""
