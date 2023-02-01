@@ -36,6 +36,14 @@ class TestSpecFromDict:
 
 
 class TestSpecFromFilePath:
+    def test_yaml_datetime(self, data_resource_path_getter):
+        fp = data_resource_path_getter(
+            "data/v3.0/datetime.yaml"
+        )
+        spec = Spec.from_file_path(fp)
+
+        spec / "paths"
+
     def test_ref(self, data_resource_path_getter):
         fp = data_resource_path_getter(
             "data/v3.0/petstore-separate/spec/openapi.yaml"

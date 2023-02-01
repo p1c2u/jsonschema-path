@@ -5,13 +5,12 @@ from json import loads
 from typing import IO
 from typing import Any
 from typing import List
-from typing import Type
 from typing import Union
 from urllib.parse import urlparse
 
 from yaml import load
 
-from jsonschema_spec.handlers.compat import SafeLoader
+from jsonschema_spec.loaders import JsonschemaSafeLoader
 from jsonschema_spec.handlers.protocols import SupportsRead
 from jsonschema_spec.handlers.utils import uri_to_path
 
@@ -19,7 +18,7 @@ from jsonschema_spec.handlers.utils import uri_to_path
 class FileHandler:
     """File-like object handler."""
 
-    def __init__(self, loader: Type[SafeLoader] = SafeLoader):
+    def __init__(self, loader: Any = JsonschemaSafeLoader):
         self.loader = loader
 
     def __call__(self, f: SupportsRead) -> Any:
