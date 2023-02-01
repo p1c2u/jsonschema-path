@@ -87,4 +87,4 @@ Related projects
 License
 #######
 
-Copyright (c) 2017-2022, Artur Maciag, All rights reserved. Apache v2
+Copyright (c) 2017-2022, Artur Maciag, All rights reserved. Apache-2.0
