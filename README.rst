@@ -21,7 +21,7 @@ About
 JSONSchema Spec with object-oriented paths
 
 Key features
-************
+############
 
 * Traverse elements like paths
 * Access spec on demand with separate dereferencing accessor layer
@@ -29,15 +29,15 @@ Key features
 Installation
 ############
 
-::
+.. code-block:: console
 
-    $ pip install jsonschema-spec
+   pip install jsonschema-spec
 
 Alternatively you can download the code and install from the repository:
 
-.. code-block:: bash
+.. code-block:: console
 
-   $ pip install -e git+https://github.com/p1c2u/jsonschema-spec.git#egg=jsonschema_spec
+   pip install -e git+https://github.com/p1c2u/jsonschema-spec.git#egg=jsonschema_spec
 
 
 Usage
@@ -45,33 +45,49 @@ Usage
 
 .. code-block:: python
 
-   from jsonschema_spec import Spec
+   >>> from jsonschema_spec import Spec
    
-   d = {
-       "openapi": "3.0.1",
-       "info": {
-            "$ref": "#/components/Version",
-       },
-       "paths": {},
-       "components": {
-           "Version": {
-               "title": "Minimal",
-               "version": "1.0",
-            },
-       },
-   }
+   >>> d = {
+   ...     "properties": {
+   ...        "info": {
+   ...            "$ref": "#/$defs/Info",
+   ...        },
+   ...     },
+   ...     "$defs": {
+   ...         "Info": {
+   ...             "properties": {
+   ...                 "title": {
+   ...                     "$ref": "http://example.com",
+   ...                 },
+   ...                 "version": {
+   ...                     "type": "string",
+   ...                     "default": "1.0",
+   ...                 },
+   ...             },
+   ...         },
+   ...     },
+   ... }
    
-   spec = Spec.from_dict(d)
+   >>> spec = Spec.from_dict(d)
    
-   # Concatenate paths with /
-   info = spec / "info"
+   >>> # Stat keys
+   >>> "properties" in spec
+   True
    
-   # Stat path keys
-   "title" in info
+   >>> # Concatenate paths with /
+   >>> info_spec = spec / "properties" / "info"
    
-   # Open path dict
-   with info.open() as info_dict:
-       print(info_dict)
+   >>> # Stat keys with implicit dereferencing
+   >>> "properties" in info_spec
+   True
+   
+   >>> # Concatenate paths with implicit dereferencing
+   >>> version_spec = info_spec / "properties" / "version"
+   
+   >>> # Open content with implicit dereferencing
+   >>> with version_spec.open() as version:
+   ...     print(version)
+   {'type': 'string', 'default': '1.0'}
 
 
 Related projects
