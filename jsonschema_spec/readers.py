@@ -1,5 +1,4 @@
 """JSONSchema spec readers module."""
-from os import path
 from pathlib import Path
 from typing import Any
 from typing import Hashable
@@ -24,14 +23,19 @@ class FileReader(BaseReader):
         return file_handler(self.fileobj), ""
 
 
-class FilePathReader(BaseReader):
-    def __init__(self, file_path: str):
-        self.file_path = file_path
+class PathReader(BaseReader):
+    def __init__(self, path: Path):
+        self.path = path
 
     def read(self) -> Tuple[Mapping[Hashable, Any], str]:
-        if not path.isfile(self.file_path):
-            raise OSError(f"No such file: {self.file_path}")
+        if not self.path.is_file():
+            raise OSError(f"No such file: {self.path}")
 
-        filename = path.abspath(self.file_path)
-        uri = Path(filename).as_uri()
+        uri = self.path.as_uri()
         return all_urls_handler(uri), uri
+
+
+class FilePathReader(PathReader):
+    def __init__(self, file_path: str):
+        path = Path(file_path)
+        super().__init__(path)

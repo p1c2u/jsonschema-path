@@ -18,13 +18,13 @@ JSONSchema Spec
 About
 #####
 
-JSONSchema Spec with object-oriented paths
+Object-oriented JSONSchema
 
 Key features
 ############
 
-* Traverse elements like paths
-* Access spec on demand with separate dereferencing accessor layer
+* Traverse schema like paths
+* Access schema on demand with separate dereferencing accessor layer
 
 Installation
 ############
@@ -45,7 +45,7 @@ Usage
 
 .. code-block:: python
 
-   >>> from jsonschema_spec import Spec
+   >>> from jsonschema_spec import SchemaPath
    
    >>> d = {
    ...     "properties": {
@@ -68,25 +68,25 @@ Usage
    ...     },
    ... }
    
-   >>> spec = Spec.from_dict(d)
+   >>> path = SchemaPath.from_dict(d)
    
    >>> # Stat keys
-   >>> "properties" in spec
+   >>> "properties" in path
    True
    
    >>> # Concatenate paths with /
-   >>> info_spec = spec / "properties" / "info"
+   >>> info_path = path / "properties" / "info"
    
    >>> # Stat keys with implicit dereferencing
-   >>> "properties" in info_spec
+   >>> "properties" in info_path
    True
    
    >>> # Concatenate paths with implicit dereferencing
-   >>> version_spec = info_spec / "properties" / "version"
+   >>> version_path = info_path / "properties" / "version"
    
    >>> # Open content with implicit dereferencing
-   >>> with version_spec.open() as version:
-   ...     print(version)
+   >>> with version_path.open() as contents:
+   ...     print(contents)
    {'type': 'string', 'default': '1.0'}
 
 

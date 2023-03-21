@@ -1,4 +1,5 @@
 from jsonschema_spec.handlers import default_handlers
+from jsonschema_spec.paths import SchemaPath
 from jsonschema_spec.paths import Spec
 
 __author__ = "Artur Maciag"
@@ -7,4 +8,4 @@ __version__ = "0.1.6"
 __url__ = "https://github.com/p1c2u/jsonschema-spec"
 __license__ = "Apache-2.0"
 
-__all__ = ["Spec", "default_handlers"]
+__all__ = ["SchemaPath", "Spec", "default_handlers"]
