@@ -448,18 +448,18 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "jsonschema-specifications"
-version = "2023.3.4"
-description = "Support files exposing JSON from the JSON Schema specifications"
+version = "2023.5.2"
+description = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jsonschema_specifications-2023.3.4-py3-none-any.whl", hash = "sha256:d9d87d1f937705af03e817c118c34eeb49de513e17545c1344c6547a381e8467"},
-    {file = "jsonschema_specifications-2023.3.4.tar.gz", hash = "sha256:53ebea27d11de138b3b8f2256c5cc762bf8bbf2210f7bd108a0cf74dcc4d2f75"},
+    {file = "jsonschema_specifications-2023.5.2-py3-none-any.whl", hash = "sha256:51d2972bf690cfe21970f722f878580d863f7c127d200fce671c5dae10b88f5f"},
+    {file = "jsonschema_specifications-2023.5.2.tar.gz", hash = "sha256:1aefc07b022e3b8ce8bec135c78b74ae1ffd260822c67011427192b3a7525e09"},
 ]
 
 [package.dependencies]
 importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
-referencing = ">=0.24.4"
+referencing = ">=0.28.0"
 
 [[package]]
 name = "mccabe"
@@ -748,18 +748,18 @@ files = [
 
 [[package]]
 name = "referencing"
-version = "0.24.4"
+version = "0.29.0"
 description = "JSON Referencing + Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "referencing-0.24.4-py3-none-any.whl", hash = "sha256:1bbb42f3bd427c2f1e311b78fa606ff3c4e53b11ff7482763d8f920b10694d12"},
-    {file = "referencing-0.24.4.tar.gz", hash = "sha256:91c157cca39421012f2a1500f4633766ee11135caeaec387ca0005e77496c9b1"},
+    {file = "referencing-0.29.0-py3-none-any.whl", hash = "sha256:bddd26f8fbb64d153334cca7bc20305c72295e287d84bbf5756afa50efdeb6ae"},
+    {file = "referencing-0.29.0.tar.gz", hash = "sha256:54b64ae36b91827f9f50d05a5af27570a5ca9ba6a1be49809215419d5ab32253"},
 ]
 
 [package.dependencies]
 attrs = ">=22.2.0"
-rpds-py = ">=0.5.0"
+rpds-py = ">=0.7.0"
 
 [[package]]
 name = "requests"
@@ -963,4 +963,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.0"
-content-hash = "1ca0a0b444834a9b6f74416edb58d62442a3a3fbbfc5a3277ef65a3bbb029aa9"
+content-hash = "e668df815ea9c118ffb792eb79547f56674f134c89730294d14927dee9270c1a"
