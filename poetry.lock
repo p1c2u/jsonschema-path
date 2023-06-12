@@ -362,18 +362,21 @@ pyflakes = ">=2.5.0,<2.6.0"
 
 [[package]]
 name = "flynt"
-version = "0.76"
+version = "0.78"
 description = "CLI tool to convert a python project's %-formatted strings to f-strings."
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "flynt-0.76-py3-none-any.whl", hash = "sha256:fc122c5f589b0c4d019d7d33597f4925fd886a8e6fb3cbadb918e4baa3661687"},
-    {file = "flynt-0.76.tar.gz", hash = "sha256:7a99c5a550ea9e8c21203f6999ed8ce69cbad7bc8465268469777cf06413193a"},
+    {file = "flynt-0.78-py3-none-any.whl", hash = "sha256:3a4cf278518f7dec3af52c94b5e7c395f623186503a684b2ba28705522871e74"},
+    {file = "flynt-0.78.tar.gz", hash = "sha256:15082167a538ea56b6ce4ca6874c22c739710759832dda78d8f43b6079b7e646"},
 ]
 
 [package.dependencies]
 astor = "*"
-tomli = ">=1.1.0"
+tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
+
+[package.extras]
+dev = ["build", "pre-commit", "pytest", "pytest-cov", "twine"]
 
 [[package]]
 name = "identify"
@@ -967,4 +970,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.0"
-content-hash = "8ee54f93f7d7977ec7b16c79e280de43b34eda89d746cdce5f1cb3f88f38b84d"
+content-hash = "13aa7ac31095f43b147a837e6c061f7ebf8002a6dc57bf7e8c3aa6fba21c6195"
