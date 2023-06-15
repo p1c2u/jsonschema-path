@@ -42,8 +42,11 @@ class TestSchemaPath:
 
         version_path = info_path / "properties" / "version"
 
-        with version_path.open() as contents:
-            assert contents == {"type": "string", "default": "1.0"}
+        expected_contents = {"type": "string", "default": "1.0"}
+        with version_path.resolve() as resolved, version_path.open() as contents:
+            assert resolved.contents == expected_contents
+            assert contents == expected_contents
+            assert id(resolved.contents) == id(contents)
 
     def test_file(self, defs, create_file):
         defs_file = create_file(defs)
@@ -64,8 +67,11 @@ class TestSchemaPath:
 
         version_path = info_path / "properties" / "version"
 
-        with version_path.open() as contents:
-            assert contents == {"type": "string", "default": "1.0"}
+        expected_contents = {"type": "string", "default": "1.0"}
+        with version_path.resolve() as resolved, version_path.open() as contents:
+            assert resolved.contents == expected_contents
+            assert contents == expected_contents
+            assert id(resolved.contents) == id(contents)
 
     @responses.activate
     def test_remote(self, defs):
@@ -91,8 +97,11 @@ class TestSchemaPath:
 
         version_path = info_path / "properties" / "version"
 
-        with version_path.open() as contents:
-            assert contents == {"type": "string", "default": "1.0"}
+        expected_contents = {"type": "string", "default": "1.0"}
+        with version_path.resolve() as resolved, version_path.open() as contents:
+            assert resolved.contents == expected_contents
+            assert contents == expected_contents
+            assert id(resolved.contents) == id(contents)
 
     @responses.activate
     def test_remote_fallback_requests(self, defs):
@@ -118,8 +127,11 @@ class TestSchemaPath:
 
         version_path = info_path / "properties" / "version"
 
-        with version_path.open() as contents:
-            assert contents == {"type": "string", "default": "1.0"}
+        expected_contents = {"type": "string", "default": "1.0"}
+        with version_path.resolve() as resolved, version_path.open() as contents:
+            assert resolved.contents == expected_contents
+            assert contents == expected_contents
+            assert id(resolved.contents) == id(contents)
 
     @mock.patch("jsonschema_spec.retrievers.USE_REQUESTS", False)
     @mock.patch("jsonschema_spec.retrievers.urlopen")
@@ -143,8 +155,11 @@ class TestSchemaPath:
 
         version_path = info_path / "properties" / "version"
 
-        with version_path.open() as contents:
-            assert contents == {"type": "string", "default": "1.0"}
+        expected_contents = {"type": "string", "default": "1.0"}
+        with version_path.resolve() as resolved, version_path.open() as contents:
+            assert resolved.contents == expected_contents
+            assert contents == expected_contents
+            assert id(resolved.contents) == id(contents)
 
     def test_file_ref(self, data_resource_path_getter):
         fp = data_resource_path_getter(
@@ -215,7 +230,8 @@ class TestSchemaPath:
                 "schema",
             ]
         )
+        expected_contents = {"type": "boolean"}
+        with property_schema_path.resolve() as resolved:
+            assert resolved.contents == expected_contents
         with property_schema_path.open() as contents:
-            assert contents == {
-                "type": "boolean",
-            }
+            assert contents == expected_contents

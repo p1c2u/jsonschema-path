@@ -6,28 +6,31 @@ from typing import Deque
 from typing import Hashable
 from typing import Iterator
 from typing import List
-from typing import Mapping
 from typing import Optional
 from typing import Union
 
 from pathable.accessors import LookupAccessor
 from referencing import Registry
 from referencing import Specification
+from referencing._core import Resolved
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
 from jsonschema_spec.handlers import default_handlers
-from jsonschema_spec.retrievers import HandlersRetriever
+from jsonschema_spec.retrievers import SchemaRetriever
+from jsonschema_spec.typing import Lookup
 from jsonschema_spec.typing import ResolverHandlers
 from jsonschema_spec.typing import Schema
 from jsonschema_spec.utils import is_ref
 
 
 class ResolverAccessor(LookupAccessor):
-    def __init__(self, schema: Schema, resolver: Resolver[Schema]):
-        super().__init__(schema)
+    def __init__(self, lookup: Lookup, resolver: Resolver[Lookup]):
+        super().__init__(lookup)
         self.resolver = resolver
 
+
+class SchemaAccessor(ResolverAccessor):
     @classmethod
     def from_schema(
         cls,
@@ -35,8 +38,8 @@ class ResolverAccessor(LookupAccessor):
         specification: Specification[Schema] = DRAFT202012,
         base_uri: str = "",
         handlers: ResolverHandlers = default_handlers,
-    ) -> "ResolverAccessor":
-        retriever = HandlersRetriever(handlers, specification)
+    ) -> "SchemaAccessor":
+        retriever = SchemaRetriever(handlers, specification)
         base_resource = specification.create_resource(schema)
         registry: Registry[Schema] = Registry(
             retrieve=retriever,  # type: ignore
@@ -49,28 +52,37 @@ class ResolverAccessor(LookupAccessor):
     def open(self, parts: List[Hashable]) -> Iterator[Union[Schema, Any]]:
         parts_deque = deque(parts)
         try:
-            yield self._open(self.lookup, parts_deque)
+            resolved = self._resolve(self.lookup, parts_deque)
+            yield resolved.contents
         finally:
             pass
 
-    def _open(
+    @contextmanager
+    def resolve(self, parts: List[Hashable]) -> Iterator[Resolved[Any]]:
+        parts_deque = deque(parts)
+        try:
+            yield self._resolve(self.lookup, parts_deque)
+        finally:
+            pass
+
+    def _resolve(
         self,
-        content: Schema,
+        contents: Schema,
         parts_deque: Deque[Hashable],
         resolver: Optional[Resolver[Schema]] = None,
-    ) -> Any:
-        if is_ref(content):
-            ref = content["$ref"]
-            resolver = resolver or self.resolver
+    ) -> Resolved[Any]:
+        resolver = resolver or self.resolver
+        if is_ref(contents):
+            ref = contents["$ref"]
             resolved = resolver.lookup(ref)
-            return self._open(
+            return self._resolve(
                 resolved.contents, parts_deque, resolver=resolved.resolver
             )
 
         try:
             part = parts_deque.popleft()
         except IndexError:
-            return content
+            return Resolved(contents=contents, resolver=resolver)  # type: ignore
         else:
-            target = content[part]
-            return self._open(target, parts_deque, resolver=resolver)
+            target = contents[part]
+            return self._resolve(target, parts_deque, resolver=resolver)

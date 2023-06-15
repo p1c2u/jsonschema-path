@@ -1,7 +1,4 @@
 from json import loads
-from typing import Any
-from typing import Hashable
-from typing import Mapping
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 
@@ -22,7 +19,7 @@ else:
     USE_REQUESTS = True
 
 
-class HandlersRetriever(Retrieve[Schema]):
+class SchemaRetriever(Retrieve[Schema]):
     def __init__(
         self, handlers: ResolverHandlers, specification: Specification[Schema]
     ):

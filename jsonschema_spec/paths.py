@@ -1,22 +1,19 @@
 """JSONSchema spec paths module."""
 import warnings
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
-from typing import Hashable
-from typing import Mapping
+from typing import Iterator
 from typing import Optional
 from typing import Type
 from typing import TypeVar
 
-from jsonschema_specifications import REGISTRY
 from pathable.paths import AccessorPath
-from referencing import Registry
 from referencing import Specification
+from referencing._core import Resolved
 from referencing.jsonschema import DRAFT202012
-from referencing.jsonschema import SchemaRegistry
-from referencing.jsonschema import specification_with
 
-from jsonschema_spec.accessors import ResolverAccessor
+from jsonschema_spec.accessors import SchemaAccessor
 from jsonschema_spec.handlers import default_handlers
 from jsonschema_spec.handlers.protocols import SupportsRead
 from jsonschema_spec.readers import FilePathReader
@@ -31,6 +28,10 @@ SPEC_SEPARATOR = "#"
 
 
 class SchemaPath(AccessorPath):
+    def __init__(self, accessor: SchemaAccessor, *args: Any, **kwargs: Any):
+        super().__init__(accessor, *args, **kwargs)
+        self._resolved_cached: Optional[Resolved[Any]] = None
+
     @classmethod
     def from_dict(
         cls: Type[TSpec],
@@ -57,7 +58,7 @@ class SchemaPath(AccessorPath):
             )
             handlers = ref_resolver_handlers
 
-        accessor = ResolverAccessor.from_schema(
+        accessor: SchemaAccessor = SchemaAccessor.from_schema(
             data,
             specification=specification,
             base_uri=base_uri,
@@ -94,6 +95,26 @@ class SchemaPath(AccessorPath):
         reader = FileReader(fileobj)
         data, _ = reader.read()
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
+
+    @contextmanager
+    def open(self) -> Any:
+        """Open the path."""
+        # Cached path content
+        with self.resolve() as resolved:
+            yield resolved.contents
+
+    @contextmanager
+    def resolve(self) -> Iterator[Resolved[Any]]:
+        """Resolve the path."""
+        # Cached path content
+        if self._resolved_cached is None:
+            self._resolved_cached = self._get_resolved()
+        yield self._resolved_cached
+
+    def _get_resolved(self) -> Resolved[Any]:
+        assert isinstance(self.accessor, SchemaAccessor)
+        with self.accessor.resolve(self.parts) as resolved:
+            return resolved
 
 
 # Backward compatibility
