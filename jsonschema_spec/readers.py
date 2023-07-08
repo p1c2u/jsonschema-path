@@ -37,5 +37,5 @@ class PathReader(BaseReader):
 
 class FilePathReader(PathReader):
     def __init__(self, file_path: str):
-        path = Path(file_path)
+        path = Path(file_path).absolute()
         super().__init__(path)

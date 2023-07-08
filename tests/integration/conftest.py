@@ -10,3 +10,17 @@ def data_resource_path_getter():
         return path.join(directory, data_file)
 
     return get_full_path
+
+
+@pytest.fixture(scope="session")
+def defs():
+    return {
+        "Info": {
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "default": "1.0",
+                },
+            },
+        },
+    }

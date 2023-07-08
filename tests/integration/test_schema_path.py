@@ -9,20 +9,54 @@ import responses
 from jsonschema_spec import SchemaPath
 
 
-class TestSchemaPath:
-    @pytest.fixture(scope="session")
-    def defs(self):
-        return {
-            "Info": {
-                "properties": {
-                    "version": {
-                        "type": "string",
-                        "default": "1.0",
-                    },
+class TestSchemaPathFromDict:
+    def test_dict(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "type": "object",
+                    "properties": {},
                 },
             },
         }
+        path = SchemaPath.from_dict(schema)
 
+        assert "properties" in path
+
+        info_path = path / "properties" / "info"
+
+        assert "properties" in info_path
+
+
+class TestSchemaPathFromFilePath:
+    def test_file_path(self, data_resource_path_getter):
+        fp = data_resource_path_getter(
+            "data/v3.0/petstore-separate/spec/openapi.yaml"
+        )
+        path = SchemaPath.from_file_path(fp)
+
+        assert "paths" in path
+
+    def test_file_path_relative(self):
+        fp = "tests/integration/data/v3.0/petstore-separate/spec/openapi.yaml"
+        path = SchemaPath.from_file_path(fp)
+
+        assert "paths" in path
+
+
+class TestSchemaPathFromFile:
+    def test_ref_recursive(self, data_resource_path_getter):
+        fp = data_resource_path_getter(
+            "data/v3.0/parent-reference/openapi.yaml"
+        )
+        base_uri = "file://" + fp
+        with open(fp) as f:
+            path = SchemaPath.from_file(f, base_uri=base_uri)
+
+        assert "paths" in path
+
+
+class TestSchemaPathOpen:
     def test_dict(self, defs):
         schema = {
             "properties": {
