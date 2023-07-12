@@ -722,13 +722,13 @@ files = [
 
 [[package]]
 name = "referencing"
-version = "0.29.0"
+version = "0.29.1"
 description = "JSON Referencing + Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "referencing-0.29.0-py3-none-any.whl", hash = "sha256:bddd26f8fbb64d153334cca7bc20305c72295e287d84bbf5756afa50efdeb6ae"},
-    {file = "referencing-0.29.0.tar.gz", hash = "sha256:54b64ae36b91827f9f50d05a5af27570a5ca9ba6a1be49809215419d5ab32253"},
+    {file = "referencing-0.29.1-py3-none-any.whl", hash = "sha256:d3c8f323ee1480095da44d55917cfb8278d73d6b4d5f677e3e40eb21314ac67f"},
+    {file = "referencing-0.29.1.tar.gz", hash = "sha256:90cb53782d550ba28d2166ef3f55731f38397def8832baac5d45235f1995e35e"},
 ]
 
 [package.dependencies]
