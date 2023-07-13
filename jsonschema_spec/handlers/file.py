@@ -1,11 +1,10 @@
 """JSONSchema spec handlers file module."""
-from io import StringIO
 from json import dumps
 from json import loads
-from typing import IO
 from typing import Any
-from typing import List
-from typing import Union
+from typing import ContextManager
+from typing import Optional
+from typing import Tuple
 from urllib.parse import urlparse
 
 from yaml import load
@@ -21,39 +20,51 @@ class FileHandler:
     def __init__(self, loader: Any = JsonschemaSafeLoader):
         self.loader = loader
 
-    def __call__(self, f: SupportsRead) -> Any:
-        data = self._load(f)
+    def __call__(self, stream: SupportsRead) -> Any:
+        data = self._load(stream)
         return loads(dumps(data))
 
-    def _load(self, f: SupportsRead) -> Any:
-        return load(f, self.loader)
+    def _load(self, stream: SupportsRead) -> Any:
+        return load(stream, self.loader)
 
 
-class BaseFilePathHandler(FileHandler):
+class BaseFilePathHandler:
     """Base file path handler."""
 
-    allowed_schemes: List[str] = NotImplemented
+    allowed_schemes: Tuple[str, ...] = NotImplemented
 
-    def __call__(self, uri: Union[SupportsRead, str]) -> Any:
-        if isinstance(uri, SupportsRead):
-            return super().__call__(uri)
+    def __init__(
+        self, *allowed_schemes: str, file_handler: Optional[FileHandler] = None
+    ):
+        self.allowed_schemes = allowed_schemes or self.allowed_schemes
+        self.file_handler = file_handler or FileHandler()
 
+    def __call__(self, uri: str) -> Any:
         parsed_url = urlparse(uri)
         if parsed_url.scheme not in self.allowed_schemes:
-            raise ValueError("Not allowed scheme")
+            raise ValueError(f"Scheme {parsed_url.scheme} not allowed")
 
-        return self._open(uri)
+        with self._open(uri) as stream:
+            return self.file_handler(stream)
 
-    def _open(self, uri: str) -> Any:
+    def _open(self, uri: str) -> ContextManager[SupportsRead]:
         raise NotImplementedError
 
 
 class FilePathHandler(BaseFilePathHandler):
     """File path handler."""
 
-    allowed_schemes = ["file"]
+    allowed_schemes = ("file",)
 
-    def _open(self, uri: str) -> Any:
+    def __init__(
+        self,
+        *allowed_schemes: str,
+        file_handler: Optional[FileHandler] = None,
+        encoding: str = "utf-8",
+    ):
+        super().__init__(*allowed_schemes, file_handler=file_handler)
+        self.encoding = encoding
+
+    def _open(self, uri: str) -> ContextManager[SupportsRead]:
         filepath = uri_to_path(uri)
-        with open(filepath) as fh:
-            return super().__call__(fh)
+        return open(filepath, encoding=self.encoding)
