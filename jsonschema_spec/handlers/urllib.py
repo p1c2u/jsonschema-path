@@ -1,18 +1,25 @@
 """JSONSchema spec handlers urllib module."""
-from typing import Any
+from contextlib import closing
+from typing import ContextManager
+from typing import Optional
 from urllib.request import urlopen
 
 from jsonschema_spec.handlers.file import BaseFilePathHandler
+from jsonschema_spec.handlers.file import FileHandler
+from jsonschema_spec.handlers.protocols import SupportsRead
 
 
 class UrllibHandler(BaseFilePathHandler):
     """URL (urllib) scheme handler."""
 
-    def __init__(self, *allowed_schemes: str, **options: Any):
-        self.timeout = options.pop("timeout", 10)
-        super().__init__(**options)
-        self.allowed_schemes = list(allowed_schemes)
+    def __init__(
+        self,
+        *allowed_schemes: str,
+        file_handler: Optional[FileHandler] = None,
+        timeout: int = 10
+    ):
+        super().__init__(*allowed_schemes, file_handler=file_handler)
+        self.timeout = timeout
 
-    def _open(self, url: str) -> Any:
-        with urlopen(url, timeout=self.timeout) as fh:
-            return super().__call__(fh)
+    def _open(self, uri: str) -> ContextManager[SupportsRead]:
+        return closing(urlopen(uri, timeout=self.timeout))
