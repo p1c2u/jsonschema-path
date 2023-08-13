@@ -58,7 +58,7 @@ mypy = "^1.4.1"
 types-PyYAML = "^6.0.12"
 types-requests = "^2.31.0"
 typing-extensions = "^4.6.0"  # required by responses. See https://github.com/p1c2u/jsonschema-spec/issues/44
-responses = "^0.23.2"
+responses = "^0.23.3"
 deptry = "^0.12.0"
 
 [tool.pytest.ini_options]
