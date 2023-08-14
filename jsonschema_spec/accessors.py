@@ -75,8 +75,14 @@ class SchemaAccessor(ResolverAccessor):
         if is_ref(contents):
             ref = contents["$ref"]
             resolved = resolver.lookup(ref)
+            self.resolver = self.resolver._evolve(
+                self.resolver._base_uri,
+                registry=resolved.resolver._registry,
+            )
             return self._resolve(
-                resolved.contents, parts_deque, resolver=resolved.resolver
+                resolved.contents,
+                parts_deque,
+                resolver=resolved.resolver,
             )
 
         try:
