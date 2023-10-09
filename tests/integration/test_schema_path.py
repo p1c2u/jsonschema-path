@@ -56,6 +56,75 @@ class TestSchemaPathFromFile:
         assert "paths" in path
 
 
+class TestSchemaPathExists:
+    def test_existing(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+        }
+
+        path = SchemaPath.from_dict(schema, "properties")
+
+        assert path.exists() is True
+
+    def test_non_existing(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+        }
+
+        path = SchemaPath.from_dict(schema, "invalid")
+
+        assert path.exists() is False
+
+
+class TestSchemaPathAsUri:
+    def test_root(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+        }
+
+        path = SchemaPath.from_dict(schema)
+
+        assert path.as_uri() == "#/"
+
+    def test_simple(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+        }
+
+        path = SchemaPath.from_dict(schema, "properties", "info")
+
+        assert path.as_uri() == "#/properties#info"
+
+    def test_non_existing(self):
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+        }
+
+        path = SchemaPath.from_dict(schema, "properties", "info", "properties")
+
+        assert path.as_uri() == "#/properties#info#properties"
+
+
 class TestSchemaPathOpen:
     def test_dict(self, defs):
         schema = {
