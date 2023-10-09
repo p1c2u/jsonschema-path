@@ -96,6 +96,17 @@ class SchemaPath(AccessorPath):
         data, _ = reader.read()
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
 
+    def exists(self) -> bool:
+        try:
+            self.content()
+        except KeyError:
+            return False
+        else:
+            return True
+
+    def as_uri(self) -> str:
+        return f"#/{str(self)}"
+
     @contextmanager
     def open(self) -> Any:
         """Open the path."""
