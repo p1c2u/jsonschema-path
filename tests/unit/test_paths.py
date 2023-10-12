@@ -11,22 +11,7 @@ from referencing.jsonschema import DRAFT202012
 from jsonschema_spec.accessors import SchemaAccessor
 from jsonschema_spec.handlers import default_handlers
 from jsonschema_spec.paths import SchemaPath
-from jsonschema_spec.paths import Spec
 from jsonschema_spec.retrievers import SchemaRetriever
-
-
-class TestSpec:
-    def test_no_kwargs(self, assert_sp):
-        schema = mock.sentinel.schema
-        retriever = SchemaRetriever(default_handlers, DRAFT202012)
-        registry = Registry(retrieve=retriever)
-        resolver = Resolver("", registry)
-        accessor = SchemaAccessor(schema, resolver)
-
-        with pytest.warns(DeprecationWarning):
-            sp = Spec(accessor)
-
-        assert_sp(sp, schema, separator=SEPARATOR)
 
 
 class TestSchemaPathFromDict:
