@@ -1,19 +1,19 @@
 ***************
-JSONSchema Spec
+JSONSchema Path
 ***************
 
-.. image:: https://img.shields.io/pypi/v/jsonschema-spec.svg
-     :target: https://pypi.python.org/pypi/jsonschema-spec
-.. image:: https://travis-ci.org/p1c2u/jsonschema-spec.svg?branch=master
-     :target: https://travis-ci.org/p1c2u/jsonschema-spec
-.. image:: https://img.shields.io/codecov/c/github/p1c2u/jsonschema-spec/master.svg?style=flat
-     :target: https://codecov.io/github/p1c2u/jsonschema-spec?branch=master
-.. image:: https://img.shields.io/pypi/pyversions/jsonschema-spec.svg
-     :target: https://pypi.python.org/pypi/jsonschema-spec
-.. image:: https://img.shields.io/pypi/format/jsonschema-spec.svg
-     :target: https://pypi.python.org/pypi/jsonschema-spec
-.. image:: https://img.shields.io/pypi/status/jsonschema-spec.svg
-     :target: https://pypi.python.org/pypi/jsonschema-spec
+.. image:: https://img.shields.io/pypi/v/jsonschema-path.svg
+     :target: https://pypi.python.org/pypi/jsonschema-path
+.. image:: https://travis-ci.org/p1c2u/jsonschema-path.svg?branch=master
+     :target: https://travis-ci.org/p1c2u/jsonschema-path
+.. image:: https://img.shields.io/codecov/c/github/p1c2u/jsonschema-path/master.svg?style=flat
+     :target: https://codecov.io/github/p1c2u/jsonschema-path?branch=master
+.. image:: https://img.shields.io/pypi/pyversions/jsonschema-path.svg
+     :target: https://pypi.python.org/pypi/jsonschema-path
+.. image:: https://img.shields.io/pypi/format/jsonschema-path.svg
+     :target: https://pypi.python.org/pypi/jsonschema-path
+.. image:: https://img.shields.io/pypi/status/jsonschema-path.svg
+     :target: https://pypi.python.org/pypi/jsonschema-path
 
 About
 #####
@@ -31,13 +31,13 @@ Installation
 
 .. code-block:: console
 
-   pip install jsonschema-spec
+   pip install jsonschema-path
 
 Alternatively you can download the code and install from the repository:
 
 .. code-block:: console
 
-   pip install -e git+https://github.com/p1c2u/jsonschema-spec.git#egg=jsonschema_spec
+   pip install -e git+https://github.com/p1c2u/jsonschema-path.git#egg=jsonschema_path
 
 
 Usage
@@ -45,7 +45,7 @@ Usage
 
 .. code-block:: python
 
-   >>> from jsonschema_spec import SchemaPath
+   >>> from jsonschema_path import SchemaPath
    
    >>> d = {
    ...     "properties": {

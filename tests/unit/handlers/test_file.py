@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from jsonschema_spec.handlers.file import FilePathHandler
+from jsonschema_path.handlers.file import FilePathHandler
 
 
 class TestFilePathHandler:

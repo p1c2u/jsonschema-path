@@ -13,14 +13,14 @@ from referencing import Specification
 from referencing._core import Resolved
 from referencing.jsonschema import DRAFT202012
 
-from jsonschema_spec.accessors import SchemaAccessor
-from jsonschema_spec.handlers import default_handlers
-from jsonschema_spec.handlers.protocols import SupportsRead
-from jsonschema_spec.readers import FilePathReader
-from jsonschema_spec.readers import FileReader
-from jsonschema_spec.readers import PathReader
-from jsonschema_spec.typing import ResolverHandlers
-from jsonschema_spec.typing import Schema
+from jsonschema_path.accessors import SchemaAccessor
+from jsonschema_path.handlers import default_handlers
+from jsonschema_path.handlers.protocols import SupportsRead
+from jsonschema_path.readers import FilePathReader
+from jsonschema_path.readers import FileReader
+from jsonschema_path.readers import PathReader
+from jsonschema_path.typing import ResolverHandlers
+from jsonschema_path.typing import Schema
 
 TSpec = TypeVar("TSpec", bound="SchemaPath")
 

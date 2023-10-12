@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from jsonschema_spec.accessors import SchemaAccessor
+from jsonschema_path.accessors import SchemaAccessor
 
 
 class TestSchemaAccessorOpen:
