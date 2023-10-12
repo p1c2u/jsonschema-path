@@ -6,7 +6,6 @@ from referencing.jsonschema import DRAFT202012
 from jsonschema_path.accessors import SchemaAccessor
 from jsonschema_path.handlers import default_handlers
 from jsonschema_path.paths import SPEC_SEPARATOR
-from jsonschema_path.paths import SchemaPath
 from jsonschema_path.retrievers import SchemaRetriever
 
 

@@ -4,7 +4,6 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import Tuple
-from typing import Type
 
 if TYPE_CHECKING:
     from yaml import SafeLoader

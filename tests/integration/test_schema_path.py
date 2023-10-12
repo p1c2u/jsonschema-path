@@ -1,9 +1,7 @@
 from io import BytesIO
 from json import dumps
-from pathlib import Path
 from unittest import mock
 
-import pytest
 import responses
 
 from jsonschema_path import SchemaPath
