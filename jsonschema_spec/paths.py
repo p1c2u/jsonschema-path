@@ -126,13 +126,3 @@ class SchemaPath(AccessorPath):
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
             return resolved
-
-
-# Backward compatibility
-class Spec(SchemaPath):
-    def __init__(self, *args: Any, **kwargs: Any):
-        warnings.warn(
-            "Spec class name is deprecated. " "Use SchemaPath instead.",
-            DeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
