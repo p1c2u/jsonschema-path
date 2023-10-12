@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 import responses
 
-from jsonschema_spec import SchemaPath
+from jsonschema_path import SchemaPath
 
 
 class TestSchemaPathFromDict:
@@ -236,8 +236,8 @@ class TestSchemaPathOpen:
             assert contents == expected_contents
             assert id(resolved.contents) == id(contents)
 
-    @mock.patch("jsonschema_spec.retrievers.USE_REQUESTS", False)
-    @mock.patch("jsonschema_spec.retrievers.urlopen")
+    @mock.patch("jsonschema_path.retrievers.USE_REQUESTS", False)
+    @mock.patch("jsonschema_path.retrievers.urlopen")
     def test_remote_fallback_urllib(self, mock_urlopen, defs):
         schema = {
             "properties": {

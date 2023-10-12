@@ -16,12 +16,12 @@ from referencing._core import Resolved
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
-from jsonschema_spec.handlers import default_handlers
-from jsonschema_spec.retrievers import SchemaRetriever
-from jsonschema_spec.typing import Lookup
-from jsonschema_spec.typing import ResolverHandlers
-from jsonschema_spec.typing import Schema
-from jsonschema_spec.utils import is_ref
+from jsonschema_path.handlers import default_handlers
+from jsonschema_path.retrievers import SchemaRetriever
+from jsonschema_path.typing import Lookup
+from jsonschema_path.typing import ResolverHandlers
+from jsonschema_path.typing import Schema
+from jsonschema_path.utils import is_ref
 
 
 class ResolverAccessor(LookupAccessor):

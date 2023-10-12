@@ -4,9 +4,9 @@ from typing import ContextManager
 from typing import Optional
 from urllib.request import urlopen
 
-from jsonschema_spec.handlers.file import BaseFilePathHandler
-from jsonschema_spec.handlers.file import FileHandler
-from jsonschema_spec.handlers.protocols import SupportsRead
+from jsonschema_path.handlers.file import BaseFilePathHandler
+from jsonschema_path.handlers.file import FileHandler
+from jsonschema_path.handlers.protocols import SupportsRead
 
 
 class UrllibHandler(BaseFilePathHandler):

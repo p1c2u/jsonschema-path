@@ -9,9 +9,9 @@ from urllib.parse import urlparse
 
 from yaml import load
 
-from jsonschema_spec.handlers.protocols import SupportsRead
-from jsonschema_spec.handlers.utils import uri_to_path
-from jsonschema_spec.loaders import JsonschemaSafeLoader
+from jsonschema_path.handlers.protocols import SupportsRead
+from jsonschema_path.handlers.utils import uri_to_path
+from jsonschema_path.loaders import JsonschemaSafeLoader
 
 
 class FileHandler:

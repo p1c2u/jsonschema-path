@@ -7,8 +7,8 @@ from referencing import Specification
 from referencing.typing import URI
 from referencing.typing import Retrieve
 
-from jsonschema_spec.typing import ResolverHandlers
-from jsonschema_spec.typing import Schema
+from jsonschema_path.typing import ResolverHandlers
+from jsonschema_path.typing import Schema
 
 USE_REQUESTS = False
 try:

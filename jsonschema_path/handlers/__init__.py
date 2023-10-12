@@ -1,17 +1,17 @@
 from typing import TYPE_CHECKING
 
-from jsonschema_spec.handlers.file import FileHandler
-from jsonschema_spec.handlers.urllib import UrllibHandler
+from jsonschema_path.handlers.file import FileHandler
+from jsonschema_path.handlers.urllib import UrllibHandler
 
 if TYPE_CHECKING:
-    from jsonschema_spec.handlers.urllib import UrllibHandler as UrlHandler
+    from jsonschema_path.handlers.urllib import UrllibHandler as UrlHandler
 else:
     try:
-        from jsonschema_spec.handlers.requests import (
+        from jsonschema_path.handlers.requests import (
             UrlRequestsHandler as UrlHandler,
         )
     except ImportError:
-        from jsonschema_spec.handlers.urllib import UrllibHandler as UrlHandler
+        from jsonschema_path.handlers.urllib import UrllibHandler as UrlHandler
 
 __all__ = ["FileHandler", "UrlHandler"]
 

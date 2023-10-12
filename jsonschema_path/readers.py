@@ -5,9 +5,9 @@ from typing import Hashable
 from typing import Mapping
 from typing import Tuple
 
-from jsonschema_spec.handlers import all_urls_handler
-from jsonschema_spec.handlers import file_handler
-from jsonschema_spec.handlers.protocols import SupportsRead
+from jsonschema_path.handlers import all_urls_handler
+from jsonschema_path.handlers import file_handler
+from jsonschema_path.handlers.protocols import SupportsRead
 
 
 class BaseReader:

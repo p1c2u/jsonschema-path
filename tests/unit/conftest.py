@@ -3,11 +3,11 @@ from referencing import Registry
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
-from jsonschema_spec.accessors import SchemaAccessor
-from jsonschema_spec.handlers import default_handlers
-from jsonschema_spec.paths import SPEC_SEPARATOR
-from jsonschema_spec.paths import SchemaPath
-from jsonschema_spec.retrievers import SchemaRetriever
+from jsonschema_path.accessors import SchemaAccessor
+from jsonschema_path.handlers import default_handlers
+from jsonschema_path.paths import SPEC_SEPARATOR
+from jsonschema_path.paths import SchemaPath
+from jsonschema_path.retrievers import SchemaRetriever
 
 
 @pytest.fixture
