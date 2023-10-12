@@ -2,16 +2,9 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-from pathable.paths import SEPARATOR
-from referencing import Registry
 from referencing import Specification
-from referencing._core import Resolver
-from referencing.jsonschema import DRAFT202012
 
-from jsonschema_path.accessors import SchemaAccessor
-from jsonschema_path.handlers import default_handlers
 from jsonschema_path.paths import SchemaPath
-from jsonschema_path.retrievers import SchemaRetriever
 
 
 class TestSchemaPathFromDict:
@@ -95,7 +88,7 @@ class TestSchemaPathFromFile:
 
         assert_sp(sp, schema, base_uri=base_uri)
 
-    def test_base_uri(self, create_file, assert_sp):
+    def test_spec_url(self, create_file, assert_sp):
         schema = {"type": "integer"}
         schema_file_path_str = create_file(schema)
         schema_file_path = Path(schema_file_path_str)
@@ -112,7 +105,6 @@ class TestSchemaPathFromPath:
     def test_file_no_exist(self, create_file):
         schema_file_path_str = "/invalid/file"
         schema_file_path = Path(schema_file_path_str)
-        schema_file_uri = schema_file_path.as_uri()
 
         with pytest.raises(OSError):
             SchemaPath.from_path(schema_file_path)

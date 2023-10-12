@@ -19,3 +19,5 @@ class TestFilePathHandler:
         handler = FilePathHandler()
 
         result = handler(test_file_uri)
+
+        assert result == {}
