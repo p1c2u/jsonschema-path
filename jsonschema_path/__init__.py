@@ -4,7 +4,7 @@ from jsonschema_path.paths import SchemaPath
 
 __author__ = "Artur Maciag"
 __email__ = "maciag.artur@gmail.com"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __url__ = "https://github.com/p1c2u/jsonschema-path"
 __license__ = "Apache-2.0"
 
