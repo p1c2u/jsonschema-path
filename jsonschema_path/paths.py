@@ -122,6 +122,10 @@ class SchemaPath(AccessorPath):
             self._resolved_cached = self._get_resolved()
         yield self._resolved_cached
 
+    def contents(self) -> Any:
+        with self.open() as d:
+            return d
+
     def _get_resolved(self) -> Resolved[Any]:
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
