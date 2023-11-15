@@ -96,9 +96,13 @@ class SchemaPath(AccessorPath):
         data, _ = reader.read()
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
 
+    def contents(self) -> Any:
+        with self.open() as d:
+            return d
+
     def exists(self) -> bool:
         try:
-            self.content()
+            self.contents()
         except KeyError:
             return False
         else:
@@ -121,10 +125,6 @@ class SchemaPath(AccessorPath):
         if self._resolved_cached is None:
             self._resolved_cached = self._get_resolved()
         yield self._resolved_cached
-
-    def contents(self) -> Any:
-        with self.open() as d:
-            return d
 
     def _get_resolved(self) -> Resolved[Any]:
         assert isinstance(self.accessor, SchemaAccessor)
