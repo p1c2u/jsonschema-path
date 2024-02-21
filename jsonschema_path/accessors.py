@@ -1,4 +1,5 @@
 """JSONSchema spec accessors module."""
+
 from collections import deque
 from contextlib import contextmanager
 from typing import Any

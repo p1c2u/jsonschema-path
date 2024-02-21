@@ -1,4 +1,5 @@
 """JSONSchema spec paths module."""
+
 import warnings
 from contextlib import contextmanager
 from pathlib import Path

@@ -1,4 +1,5 @@
 """JSONSchema spec handlers urllib module."""
+
 from contextlib import closing
 from typing import ContextManager
 from typing import Optional

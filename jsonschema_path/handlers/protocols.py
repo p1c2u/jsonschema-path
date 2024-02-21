@@ -3,5 +3,4 @@ from typing import Protocol
 
 
 class SupportsRead(Protocol):
-    def read(self, amount: Optional[int] = 0) -> str:
-        ...
+    def read(self, amount: Optional[int] = 0) -> str: ...

@@ -1,4 +1,5 @@
 """JSONSchema spec handlers file module."""
+
 from json import dumps
 from json import loads
 from typing import Any
