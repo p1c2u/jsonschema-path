@@ -1,4 +1,5 @@
 """JSONSchema spec handlers requests module."""
+
 from contextlib import closing
 from io import StringIO
 from typing import ContextManager
