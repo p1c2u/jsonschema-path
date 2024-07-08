@@ -109,17 +109,6 @@ files = [
 ]
 
 [[package]]
-name = "chardet"
-version = "5.1.0"
-description = "Universal encoding detector for Python 3"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "chardet-5.1.0-py3-none-any.whl", hash = "sha256:362777fb014af596ad31334fde1e8c327dfdb076e1960d1694662d46a6917ab9"},
-    {file = "chardet-5.1.0.tar.gz", hash = "sha256:0d62712b956bc154f85fb0a266e2a3c5913c2967e00348701b32411d6def31e5"},
-]
-
-[[package]]
 name = "charset-normalizer"
 version = "3.1.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -296,28 +285,27 @@ toml = ["tomli"]
 
 [[package]]
 name = "deptry"
-version = "0.14.2"
+version = "0.16.2"
 description = "A command line utility to check for unused, missing and transitive dependencies in a Python project."
 optional = false
-python-versions = ">=3.8, <4.0"
+python-versions = ">=3.8"
 files = [
-    {file = "deptry-0.14.2-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:6f451ac26990bcb3e4d517271b87f1f02e7272da6644e47755aa72bbb649a8dd"},
-    {file = "deptry-0.14.2-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:7b3eeeace8c3cdb2eafe14d7a0261bb2ec410d1887a4152091e9dcb73325b452"},
-    {file = "deptry-0.14.2-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cb4988bff104bfd3c0b13841f18dbddc6c818b88101cad97f662acc5827209ac"},
-    {file = "deptry-0.14.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f61a6c1165e91753d029c2a598d0ff37b7e6cb436beff5cc3ba6c7b8b4acf93"},
-    {file = "deptry-0.14.2-cp38-abi3-win_amd64.whl", hash = "sha256:65d20f7316b2f2ff545430dd3c2dea6dc668cd6ee3b866dffdf78d39c3b07ee8"},
-    {file = "deptry-0.14.2-pp310-pypy310_pp73-macosx_10_12_x86_64.whl", hash = "sha256:95901237482a390611370522d707931eeb1ea7172a56fe1bf84f0d4624b1dd4c"},
-    {file = "deptry-0.14.2-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6f531fd1cdcc980438647cc8c95115989f0a7efbf3456611174cfd54db721657"},
-    {file = "deptry-0.14.2-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:54182741d343bcca73116a13eb905b5bded80ef72e2d13cdb23081c72a486f17"},
-    {file = "deptry-0.14.2-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:6c9a2949d2c0c580981e22c8ceff0461e77e632b94dacd02307f81caaa35f93f"},
-    {file = "deptry-0.14.2.tar.gz", hash = "sha256:1c585d4a5f9ddc75ed0cb27f99e998edda4720d050ba7214503a2bfe5e85d7df"},
+    {file = "deptry-0.16.2-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:24bfbae07bd6533c852c795e8d88d05a8ad0801bec0d3662e1a37db763c52540"},
+    {file = "deptry-0.16.2-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:fc881688a2eaeafe51c0617d32a6535057bccdb74559cc667109f48f81cd976e"},
+    {file = "deptry-0.16.2-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fed4b692f556e4c80acb42cec93e3b5fdc7fc2323049c2a0cfd9dfc4a9c7033e"},
+    {file = "deptry-0.16.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:93ec508a932d8f06c3bd1aa7a4548d5dbec92c3060d42eedcda3be9729bd7c3b"},
+    {file = "deptry-0.16.2-cp38-abi3-win_amd64.whl", hash = "sha256:eb92e9aacde66cfe001d6318eb0851ae0ca26fea441defed4765a47644daf8bb"},
+    {file = "deptry-0.16.2-pp310-pypy310_pp73-macosx_10_12_x86_64.whl", hash = "sha256:dfdceca2fbc87f4bce04df4207914a5eb37e67fb2107579ad2e88107c22d2456"},
+    {file = "deptry-0.16.2-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:96ab62dd5f4658735aac72d0e49f6d896eabf50a0e4e2cdecb436a1362aa696b"},
+    {file = "deptry-0.16.2-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7e4408fa5a8d146b55bc40f0829fb875efef33174a2679bd9954ce988b9bc0d7"},
+    {file = "deptry-0.16.2-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:af976afc2a0583f48dc25f616d2566fecd7af5080675c8eccb161def88d93503"},
+    {file = "deptry-0.16.2-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:dd86c9d34aa75b91fb72b34110f0660b2277bf9a95fe9cae3ead36d465bc44ac"},
+    {file = "deptry-0.16.2.tar.gz", hash = "sha256:f0f752cf6f5e9f7445a79fcf195b772cd2d4b889cd260e23867dd8013caa74c1"},
 ]
 
 [package.dependencies]
-chardet = ">=4.0.0"
 click = ">=8.0.0,<9"
 colorama = {version = ">=0.4.6", markers = "sys_platform == \"win32\""}
-pathspec = ">=0.9.0"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 
 [[package]]
@@ -971,4 +959,4 @@ testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.0"
-content-hash = "95f62596cb82a0e5144a59c67ef77741d6e2595fedf5084dfe468d92269978be"
+content-hash = "005762afca59bbc92bed724c79fb97900ce24c8088c77e9457d40470469fb24b"
