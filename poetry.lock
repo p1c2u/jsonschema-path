@@ -241,7 +241,7 @@ description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 groups = ["dev"]
-markers = "platform_system == \"Windows\" or sys_platform == \"win32\""
+markers = "sys_platform == \"win32\" or platform_system == \"Windows\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -604,7 +604,6 @@ description = "Object-oriented paths"
 optional = false
 python-versions = "<4.0.0,>=3.7.0"
 groups = ["main"]
-markers = "python_full_version < \"4.0.0\""
 files = [
     {file = "pathable-0.4.4-py3-none-any.whl", hash = "sha256:5ae9e94793b6ef5a4cbe0a7ce9dbbefc1eec38df253763fd0aeeacf2762dbbc2"},
     {file = "pathable-0.4.4.tar.gz", hash = "sha256:6905a3cd17804edfac7875b5f6c9142a218c7caef78693c2dbbbfbac186d88b2"},
@@ -1133,5 +1132,5 @@ requests = ["requests"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.9.0"
-content-hash = "0feddfbb6a31c95e48b880c73f64948953c00a88260917b7ba8342f1d7cb4776"
+python-versions = ">=3.9.0,<4.0.0"
+content-hash = "7e94f202003ee613054d222c5d5260f6b77e0cfb5b4418e9772ae8d829f5e4f4"
