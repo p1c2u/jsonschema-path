@@ -103,4 +103,4 @@ Related projects
 License
 #######
 
-Copyright (c) 2017-2022, Artur Maciag, All rights reserved. Apache-2.0
+Copyright (c) 2017-2025, Artur Maciag, All rights reserved. Apache-2.0
