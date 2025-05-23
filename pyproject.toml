@@ -32,7 +32,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -41,8 +40,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-pathable = "^0.4.1"
-python = "^3.8.0"
+pathable = {version = "^0.4.1", python = ">=3.9.0,<4.0.0"}
+python = ">=3.9.0"
 PyYAML = ">=5.1"
 requests = {version = "^2.31.0", optional = true}
 referencing = "<0.37.0"
