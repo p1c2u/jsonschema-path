@@ -1,8 +1,7 @@
 from typing import Any
-from typing import Hashable
 from typing import Mapping
 
-Lookup = Mapping[Hashable, Any]
+Lookup = Mapping[str, Any]
 
 ResolverHandlers = Mapping[str, Any]
-Schema = Mapping[Hashable, Any]
+Schema = Mapping[str, Any]
