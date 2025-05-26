@@ -1,11 +1,12 @@
 """JSONSchema spec accessors module."""
 
 from collections import deque
+from collections.abc import Hashable
+from collections.abc import Sequence
 from contextlib import contextmanager
 from typing import Any
 from typing import Deque
 from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import Union
 from typing import cast
@@ -20,26 +21,17 @@ from referencing.jsonschema import DRAFT202012
 from jsonschema_path.handlers import default_handlers
 from jsonschema_path.retrievers import SchemaRetriever
 from jsonschema_path.typing import Lookup
+from jsonschema_path.typing import LookupKey
 from jsonschema_path.typing import ResolverHandlers
 from jsonschema_path.typing import Schema
 from jsonschema_path.utils import is_ref
 
 
-class ResolverAccessor(LookupAccessor):
-    def __init__(self, lookup: Lookup, resolver: Resolver[Lookup]):
-        super().__init__(cast(Any, lookup))
+class SchemaAccessor(LookupAccessor):
+    def __init__(self, schema: Schema, resolver: Resolver[Schema]):
+        super().__init__(cast(Any, cast(Lookup, schema)))
         self.resolver = resolver
 
-    def stat(self, parts: List[Any]) -> dict[str, Any]:
-        d: Any = self.lookup
-        for part in parts:
-            if not isinstance(d, dict) or part not in d:
-                return {"exists": False}
-            d = cast(Any, d[part])
-        return {"exists": True}
-
-
-class SchemaAccessor(ResolverAccessor):
     @classmethod
     def from_schema(
         cls,
@@ -59,31 +51,39 @@ class SchemaAccessor(ResolverAccessor):
         resolver = registry.resolver(base_uri=base_uri)
         return cls(schema, resolver)
 
+    def stat(self, parts: Sequence[Hashable]) -> dict[str, Any]:
+        d: Any = self.content
+        for part in parts:
+            if not isinstance(d, dict) or part not in d:
+                return {"exists": False}
+            d = cast(Any, d[part])
+        return {"exists": True}
+
     @contextmanager
-    def open(self, parts: List[Any]) -> Iterator[Union[Schema, Any]]:
+    def open(self, parts: Sequence[Hashable]) -> Iterator[Union[Lookup, Any]]:
         # Override signature to match LookupAccessor: List[Hashable] -> List[Any]
         parts_deque = deque(parts)
         try:
-            resolved = self._resolve(cast(Schema, self.lookup), parts_deque)
+            resolved = self._resolve(cast(Schema, self.content), parts_deque)
             yield resolved.contents
         finally:
             pass
 
     @contextmanager
-    def resolve(self, parts: list[Any]) -> Iterator[Resolved[Any]]:
+    def resolve(self, parts: Sequence[Hashable]) -> Iterator[Resolved[Schema]]:
         # Accepts list[Any] for compatibility with AccessorPath usage
         parts_deque = deque(parts)
         try:
-            yield self._resolve(cast(Schema, self.lookup), parts_deque)
+            yield self._resolve(cast(Schema, self.content), parts_deque)
         finally:
             pass
 
     def _resolve(
         self,
         contents: Schema,
-        parts_deque: Deque[str],
+        parts_deque: Deque[Hashable],
         resolver: Optional[Resolver[Schema]] = None,
-    ) -> Resolved[Any]:
+    ) -> Resolved[Schema]:
         resolver = resolver or self.resolver
         if is_ref(contents):
             ref = contents["$ref"]
