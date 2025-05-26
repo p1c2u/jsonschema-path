@@ -9,7 +9,7 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
-from pathable.paths import AccessorPath
+from pathable import LookupPath
 from referencing import Specification
 from referencing._core import Resolved
 from referencing.jsonschema import DRAFT202012
@@ -28,7 +28,7 @@ TSpec = TypeVar("TSpec", bound="SchemaPath")
 SPEC_SEPARATOR = "#"
 
 
-class SchemaPath(AccessorPath):
+class SchemaPath(LookupPath):
     def __init__(self, accessor: SchemaAccessor, *args: Any, **kwargs: Any):
         super().__init__(accessor, *args, **kwargs)
         self._resolved_cached: Optional[Resolved[Any]] = None
@@ -98,6 +98,10 @@ class SchemaPath(AccessorPath):
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
 
     def contents(self) -> Any:
+        warnings.warn(
+            "'contents' method is deprecated. Use 'read_value' instead.",
+            DeprecationWarning,
+        )
         with self.open() as d:
             return d
 

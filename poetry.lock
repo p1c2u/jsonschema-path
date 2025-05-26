@@ -626,14 +626,14 @@ files = [
 
 [[package]]
 name = "pathable"
-version = "0.4.4"
+version = "0.5.0a1"
 description = "Object-oriented paths"
 optional = false
-python-versions = "<4.0.0,>=3.7.0"
+python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pathable-0.4.4-py3-none-any.whl", hash = "sha256:5ae9e94793b6ef5a4cbe0a7ce9dbbefc1eec38df253763fd0aeeacf2762dbbc2"},
-    {file = "pathable-0.4.4.tar.gz", hash = "sha256:6905a3cd17804edfac7875b5f6c9142a218c7caef78693c2dbbbfbac186d88b2"},
+    {file = "pathable-0.5.0a1-py3-none-any.whl", hash = "sha256:c2f7d8b66dd441f43b4031e403e08f557d81d07fce5e875b535bcfc185e01d39"},
+    {file = "pathable-0.5.0a1.tar.gz", hash = "sha256:2086c18ecbb51c059bc02b617698f9bcef9cee917db7c2a7ff4e5f2b3f2854f7"},
 ]
 
 [[package]]
@@ -1229,4 +1229,4 @@ requests = ["requests"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<4.0.0"
-content-hash = "c5c54be00e3abc90f492f9ee00531f067e75c0d0d78b10240065b5aa5c42db0c"
+content-hash = "f6d48162805e27cf65d26beecbbc91403c2f1a649934774c4d7d9c5528d18542"
