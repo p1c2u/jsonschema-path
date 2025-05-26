@@ -18,7 +18,7 @@ def assert_ra():
         handlers=default_handlers,
         specification=DRAFT202012,
     ):
-        assert sa.lookup == schema
+        assert sa.content == schema
         resolver = sa.resolver
         assert type(resolver) is Resolver
         assert resolver._base_uri == base_uri
@@ -41,7 +41,7 @@ def assert_sa():
         specification=DRAFT202012,
     ):
         assert type(sa) is SchemaAccessor
-        assert sa.lookup == schema
+        assert sa.node == schema
         resolver = sa.resolver
         assert type(resolver) is Resolver
         assert resolver._base_uri == base_uri
@@ -65,7 +65,7 @@ def assert_sp(assert_sa):
         specification=DRAFT202012,
     ):
         assert sp.separator == separator
-        assert sp.parts == []
+        assert sp.parts == ()
         assert_sa(
             sp.accessor,
             schema,

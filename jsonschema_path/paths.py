@@ -2,6 +2,7 @@
 
 import warnings
 from contextlib import contextmanager
+from functools import cached_property
 from pathlib import Path
 from typing import Any
 from typing import Iterator
@@ -9,7 +10,8 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
-from pathable.paths import AccessorPath
+from pathable import LookupPath
+from pathable.types import LookupNode
 from referencing import Specification
 from referencing._core import Resolved
 from referencing.jsonschema import DRAFT202012
@@ -23,19 +25,16 @@ from jsonschema_path.readers import PathReader
 from jsonschema_path.typing import ResolverHandlers
 from jsonschema_path.typing import Schema
 
-TSpec = TypeVar("TSpec", bound="SchemaPath")
+TSchemaPath = TypeVar("TSchemaPath", bound="SchemaPath")
 
 SPEC_SEPARATOR = "#"
 
 
-class SchemaPath(AccessorPath):
-    def __init__(self, accessor: SchemaAccessor, *args: Any, **kwargs: Any):
-        super().__init__(accessor, *args, **kwargs)
-        self._resolved_cached: Optional[Resolved[Any]] = None
+class SchemaPath(LookupPath):
 
     @classmethod
     def from_dict(
-        cls: Type[TSpec],
+        cls: Type[TSchemaPath],
         data: Schema,
         *args: Any,
         separator: str = SPEC_SEPARATOR,
@@ -44,7 +43,7 @@ class SchemaPath(AccessorPath):
         handlers: ResolverHandlers = default_handlers,
         spec_url: Optional[str] = None,
         ref_resolver_handlers: Optional[ResolverHandlers] = None,
-    ) -> TSpec:
+    ) -> TSchemaPath:
         if spec_url is not None:
             warnings.warn(
                 "spec_url parameter is deprecated. " "Use base_uri instead.",
@@ -70,34 +69,38 @@ class SchemaPath(AccessorPath):
 
     @classmethod
     def from_path(
-        cls: Type[TSpec],
+        cls: Type[TSchemaPath],
         path: Path,
-    ) -> TSpec:
+    ) -> TSchemaPath:
         reader = PathReader(path)
         data, base_uri = reader.read()
         return cls.from_dict(data, base_uri=base_uri)
 
     @classmethod
     def from_file_path(
-        cls: Type[TSpec],
+        cls: Type[TSchemaPath],
         file_path: str,
-    ) -> TSpec:
+    ) -> TSchemaPath:
         reader = FilePathReader(file_path)
         data, base_uri = reader.read()
         return cls.from_dict(data, base_uri=base_uri)
 
     @classmethod
     def from_file(
-        cls: Type[TSpec],
+        cls: Type[TSchemaPath],
         fileobj: SupportsRead,
         base_uri: str = "",
         spec_url: Optional[str] = None,
-    ) -> TSpec:
+    ) -> TSchemaPath:
         reader = FileReader(fileobj)
         data, _ = reader.read()
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
 
     def contents(self) -> Any:
+        warnings.warn(
+            "'contents' method is deprecated. Use 'read_value' instead.",
+            DeprecationWarning,
+        )
         with self.open() as d:
             return d
 
@@ -120,14 +123,13 @@ class SchemaPath(AccessorPath):
             yield resolved.contents
 
     @contextmanager
-    def resolve(self) -> Iterator[Resolved[Any]]:
+    def resolve(self) -> Iterator[Resolved[LookupNode]]:
         """Resolve the path."""
         # Cached path content
-        if self._resolved_cached is None:
-            self._resolved_cached = self._get_resolved()
-        yield self._resolved_cached
+        yield self._get_resolved
 
-    def _get_resolved(self) -> Resolved[Any]:
+    @cached_property
+    def _get_resolved(self) -> Resolved[LookupNode]:
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
             return resolved
