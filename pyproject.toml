@@ -63,7 +63,7 @@ types-requests = "^2.31.0"
 typing-extensions = "^4.10.0"  # required by responses. See https://github.com/p1c2u/jsonschema-path/issues/44
 responses = "^0.25.0"
 deptry = "^0.19.1"
-pyflakes = "^2.5.0"
+pyflakes = ">=2.5,<4.0"
 ipdb = "^0.13.13"
 
 [tool.poetry.extras]
