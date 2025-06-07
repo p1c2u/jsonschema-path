@@ -19,7 +19,7 @@ ignore_missing_imports = true
 
 [tool.poetry]
 name = "jsonschema-path"
-version = "0.3.4"
+version = "0.4.0a1"
 description = "JSONSchema Spec with object-oriented paths"
 authors = ["Artur Maciag <maciag.artur@gmail.com>"]
 license = "Apache-2.0"
@@ -95,7 +95,7 @@ message_template = "Version {new_version}"
 tag_template = "{new_version}"
 
 [tool.tbump.version]
-current = "0.3.4"
+current = "0.4.0a1"
 regex = '''
   (?P<major>\d+)
   \.
