@@ -18,9 +18,7 @@ class TestSchemaAccessorOpen:
             handlers={"x": retrieve},
         )
 
-        with accessor.open(["one", "value"]) as opened:
-            assert opened == "tested"
-        with accessor.open(["two", "value"]) as opened:
-            assert opened == "tested"
+        assert accessor.read(["one", "value"]) == "tested"
+        assert accessor.read(["two", "value"]) == "tested"
 
         retrieve.assert_called_once_with("x://testref")
