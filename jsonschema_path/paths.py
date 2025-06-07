@@ -10,8 +10,7 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
-from pathable import LookupPath
-from pathable.types import LookupNode
+from pathable import AccessorPath
 from referencing import Specification
 from referencing._core import Resolved
 from referencing.jsonschema import DRAFT202012
@@ -24,13 +23,17 @@ from jsonschema_path.readers import FileReader
 from jsonschema_path.readers import PathReader
 from jsonschema_path.typing import ResolverHandlers
 from jsonschema_path.typing import Schema
+from jsonschema_path.typing import SchemaKey
+from jsonschema_path.typing import SchemaNode
+from jsonschema_path.typing import SchemaValue
 
+# Python 3.11+ shortcut: typing.Self
 TSchemaPath = TypeVar("TSchemaPath", bound="SchemaPath")
 
 SPEC_SEPARATOR = "#"
 
 
-class SchemaPath(LookupPath):
+class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
 
     @classmethod
     def from_dict(
@@ -123,13 +126,13 @@ class SchemaPath(LookupPath):
             yield resolved.contents
 
     @contextmanager
-    def resolve(self) -> Iterator[Resolved[LookupNode]]:
+    def resolve(self) -> Iterator[Resolved[SchemaNode]]:
         """Resolve the path."""
         # Cached path content
         yield self._get_resolved
 
     @cached_property
-    def _get_resolved(self) -> Resolved[LookupNode]:
+    def _get_resolved(self) -> Resolved[SchemaNode]:
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
             return resolved
