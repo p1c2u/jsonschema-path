@@ -22,3 +22,24 @@ class TestSchemaAccessorOpen:
         assert accessor.read(["two", "value"]) == "tested"
 
         retrieve.assert_called_once_with("x://testref")
+
+
+class TestSchemaAccessorKeys:
+    def test_dereferences_once(self):
+        retrieve = Mock(return_value={"value": "tested"})
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {
+                    "$ref": "x://testref",
+                },
+                "two": {
+                    "$ref": "x://testref",
+                },
+            },
+            handlers={"x": retrieve},
+        )
+
+        assert list(accessor.keys(["one"])) == ["value"]
+        assert accessor.read(["two", "value"]) == "tested"
+
+        retrieve.assert_called_once_with("x://testref")
