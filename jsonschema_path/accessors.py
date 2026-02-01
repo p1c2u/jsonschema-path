@@ -64,21 +64,18 @@ class SchemaAccessor(LookupAccessor):
         return {"exists": True}
 
     def keys(self, parts: Sequence[LookupKey]) -> Sequence[LookupKey]:
-        node = self._get_node(self.node, pdeque(parts), resolver=self.resolver)
+        resolved = self.get_resolved(pdeque(parts))
+        node = resolved.contents
         if isinstance(node, dict):
-            return list(node.keys())
+            # dict_keys has O(1) membership, no allocation.
+            return cast(Sequence[LookupKey], node.keys())
         if isinstance(node, list):
-            return list(range(len(node)))
+            # range has O(1) membership and supports iteration.
+            return cast(Sequence[LookupKey], range(len(node)))
         raise AttributeError
 
     def read(self, parts: Sequence[LookupKey]) -> LookupValue:
-        resolved = self._get_resolved(
-            cast(Schema, self.node), pdeque(parts), resolver=self.resolver
-        )
-        self.resolver = self.resolver._evolve(
-            self.resolver._base_uri,
-            registry=resolved.resolver._registry,
-        )
+        resolved = self.get_resolved(pdeque(parts))
         return self._read_node(resolved.contents)
 
     @contextmanager
@@ -86,16 +83,23 @@ class SchemaAccessor(LookupAccessor):
         self, parts: Sequence[LookupKey]
     ) -> Iterator[Resolved[LookupNode]]:
         try:
-            resolved = self._get_resolved(
-                self.node, pdeque(parts), resolver=self.resolver
-            )
-            self.resolver = self.resolver._evolve(
-                self.resolver._base_uri,
-                registry=resolved.resolver._registry,
-            )
-            yield resolved
+            yield self.get_resolved(pdeque(parts))
         finally:
             pass
+
+    def get_node(self, parts: PDeque[LookupKey]) -> LookupNode:
+        resolved = self.get_resolved(parts)
+        return resolved.contents
+
+    def get_resolved(self, parts: PDeque[LookupKey]) -> Resolved[LookupNode]:
+        resolved = self._get_resolved(
+            self.node, pdeque(parts), resolver=self.resolver
+        )
+        self.resolver = self.resolver._evolve(
+            self.resolver._base_uri,
+            registry=resolved.resolver._registry,
+        )
+        return resolved
 
     @classmethod
     def _get_node(
