@@ -1,0 +1,87 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Run a shorter benchmark (fewer iterations)"
+        required: false
+        default: false
+        type: boolean
+      repeats:
+        description: "Repeats per scenario (median is reported)"
+        required: false
+        default: "5"
+        type: string
+      warmup_loops:
+        description: "Warmup passes before timing"
+        required: false
+        default: "1"
+        type: string
+
+jobs:
+  bench:
+    name: "Bench"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up poetry
+        uses: Gr1N/setup-poetry@v9
+        with:
+          poetry-version: "2.2.1"
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: .venv
+          key: venv-bench-${{ runner.os }}-py3.12-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: timeout 10s poetry run pip --version || rm -rf .venv
+
+      - name: Install dependencies
+        run: poetry install --all-extras
+
+      - name: Run benchmarks
+        env:
+          PYTHONHASHSEED: "0"
+        shell: bash
+        run: |
+          set -euo pipefail
+          quick_flag=""
+          if [[ "${{ inputs.quick }}" == "true" ]]; then
+            quick_flag="--quick"
+          fi
+
+          repeats="${{ inputs.repeats }}"
+          warmup="${{ inputs.warmup_loops }}"
+
+          poetry run python -m tests.benchmarks.bench_parse \
+            --output reports/bench-parse.json \
+            $quick_flag \
+            --repeats "$repeats" \
+            --warmup-loops "$warmup"
+
+          poetry run python -m tests.benchmarks.bench_lookup \
+            --output reports/bench-lookup.json \
+            $quick_flag \
+            --repeats "$repeats" \
+            --warmup-loops "$warmup"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsonschema-path-bench-results
+          path: reports/bench-*.json

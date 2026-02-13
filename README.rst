@@ -90,6 +90,43 @@ Usage
    {'type': 'string', 'default': '1.0'}
 
 
+Benchmarks
+##########
+
+Benchmarks mirror the lightweight (dependency-free) JSON output format used in
+`pathable`.
+
+Run locally with Poetry:
+
+.. code-block:: console
+
+   poetry run python -m tests.benchmarks.bench_parse --output reports/bench-parse.json
+   poetry run python -m tests.benchmarks.bench_lookup --output reports/bench-lookup.json
+
+For a quick smoke run:
+
+.. code-block:: console
+
+   poetry run python -m tests.benchmarks.bench_parse --output reports/bench-parse.quick.json --quick
+   poetry run python -m tests.benchmarks.bench_lookup --output reports/bench-lookup.quick.json --quick
+
+You can also control repeats/warmup via env vars:
+
+.. code-block:: console
+
+   export JSONSCHEMA_PATH_BENCH_REPEATS=5
+   export JSONSCHEMA_PATH_BENCH_WARMUP=1
+
+Compare two results:
+
+.. code-block:: console
+
+    poetry run python -m tests.benchmarks.compare_results \
+       --baseline reports/bench-lookup-master.json \
+       --candidate reports/bench-lookup.json \
+       --tolerance 0.20
+
+
 Related projects
 ################
 
