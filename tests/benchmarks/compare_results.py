@@ -41,7 +41,7 @@ def _canonicalize_scenario_name(name: str) -> str:
 
 
 def _load(path: str) -> Mapping[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data_any = json.load(f)
     if not isinstance(data_any, dict):
         raise ValueError("Invalid report: expected top-level JSON object")
