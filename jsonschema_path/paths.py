@@ -1,5 +1,6 @@
 """JSONSchema spec paths module."""
 
+import os
 import warnings
 from contextlib import contextmanager
 from functools import cached_property
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from typing import Iterator
 from typing import Optional
+from typing import Sequence
 from typing import Type
 from typing import TypeVar
 
@@ -34,6 +36,61 @@ SPEC_SEPARATOR = "#"
 
 
 class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
+
+    @classmethod
+    def _parse_args(
+        cls,
+        args: Sequence[Any],
+        sep: str = SPEC_SEPARATOR,
+    ) -> tuple[SchemaKey, ...]:
+        parts: list[SchemaKey] = []
+        append = parts.append
+        extend = parts.extend
+
+        for a in args:
+            if isinstance(a, cls):
+                extend(a.parts)
+                continue
+
+            # Fast-path: benchmarks overwhelmingly pass `str`/`int` parts.
+            if isinstance(a, int):
+                append(a)
+                continue
+
+            if isinstance(a, str):
+                if a and a != ".":
+                    if sep in a:
+                        for x in a.split(sep):
+                            if x and x != ".":
+                                append(x)
+                    else:
+                        append(a)
+                continue
+
+            if isinstance(a, bytes):
+                a = a.decode("ascii")
+
+            # PathLike is relatively expensive to check; keep it after common types.
+            if isinstance(a, os.PathLike):
+                a = os.fspath(a)
+                if isinstance(a, bytes):
+                    a = a.decode("ascii")
+                if isinstance(a, str):
+                    if a and a != ".":
+                        if sep in a:
+                            for x in a.split(sep):
+                                if x and x != ".":
+                                    append(x)
+                        else:
+                            append(a)
+                    continue
+
+            raise TypeError(
+                "argument must be str, int, bytes, os.PathLike, or SchemaPath; got %r"
+                % (type(a),)
+            )
+
+        return tuple(parts)
 
     @classmethod
     def from_dict(
