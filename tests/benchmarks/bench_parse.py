@@ -59,10 +59,6 @@ def main(argv: Iterable[str] | None = None) -> int:
         inputs = _build_args(n, sep=sep)
         inputs_t = tuple(inputs)
 
-        loops_parse = 80_000 if n <= 100 else 10_000
-        if args.quick:
-            loops_parse = min(loops_parse, 10_000)
-
         # Note: older pathable versions (e.g. 0.5.0b2) do not expose
         # BasePath._parse_args publicly. We benchmark `parse_parts` (core of
         # segment splitting/filtering) and then the full SchemaPath constructor.
