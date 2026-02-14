@@ -61,12 +61,7 @@ class SchemaAccessor(LookupAccessor):
 
         node = resolved.contents
 
-        if isinstance(node, dict):
-            return {
-                "type": type(node).__name__,
-                "length": len(node),
-            }
-        if isinstance(node, list):
+        if self._is_traversable_node(node):
             return {
                 "type": type(node).__name__,
                 "length": len(node),
@@ -119,7 +114,9 @@ class SchemaAccessor(LookupAccessor):
             return isinstance(key, int) and 0 <= key < len(node)
         return False
 
-    def require_child(self, parts: Sequence[LookupKey], key: LookupKey) -> None:
+    def require_child(
+        self, parts: Sequence[LookupKey], key: LookupKey
+    ) -> None:
         # Validate parent path for intermediate diagnostics.
         resolved = self.get_resolved(parts)
         node = resolved.contents
