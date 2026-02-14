@@ -12,8 +12,6 @@ from pathable.accessors import LookupAccessor
 from pathable.types import LookupKey
 from pathable.types import LookupNode
 from pathable.types import LookupValue
-from pyrsistent import PDeque
-from pyrsistent import pdeque
 from referencing import Registry
 from referencing import Specification
 from referencing._core import Resolved
@@ -55,27 +53,90 @@ class SchemaAccessor(LookupAccessor):
         resolver = registry.resolver(base_uri=base_uri)
         return cls(schema, resolver)
 
-    def stat(self, parts: Sequence[Hashable]) -> dict[str, Any]:
-        d: Any = self.node
-        for part in parts:
-            if not isinstance(d, dict) or part not in d:
-                return {"exists": False}
-            d = cast(Any, d[part])
-        return {"exists": True}
+    def stat(self, parts: Sequence[Hashable]) -> Optional[dict[str, Any]]:
+        try:
+            resolved = self.get_resolved(cast(Sequence[LookupKey], parts))
+        except (KeyError, IndexError, TypeError):
+            return None
+
+        node = resolved.contents
+
+        if isinstance(node, dict):
+            return {
+                "type": type(node).__name__,
+                "length": len(node),
+            }
+        if isinstance(node, list):
+            return {
+                "type": type(node).__name__,
+                "length": len(node),
+            }
+        try:
+            length = len(cast(Any, node))
+        except TypeError:
+            length = None
+
+        return {
+            "type": type(node).__name__,
+            "length": length,
+        }
 
     def keys(self, parts: Sequence[LookupKey]) -> Sequence[LookupKey]:
-        resolved = self.get_resolved(pdeque(parts))
+        resolved = self.get_resolved(parts)
         node = resolved.contents
+
         if isinstance(node, dict):
             # dict_keys has O(1) membership, no allocation.
             return cast(Sequence[LookupKey], node.keys())
         if isinstance(node, list):
             # range has O(1) membership and supports iteration.
             return cast(Sequence[LookupKey], range(len(node)))
-        raise AttributeError
+
+        # Non-traversable leaf.
+        if parts:
+            raise KeyError(parts[-1])
+        raise KeyError
+
+    def len(self, parts: Sequence[LookupKey]) -> int:
+        resolved = self.get_resolved(parts)
+        node = resolved.contents
+        if isinstance(node, (dict, list)):
+            return len(node)
+        if parts:
+            raise KeyError(parts[-1])
+        raise KeyError
+
+    def contains(self, parts: Sequence[LookupKey], key: LookupKey) -> bool:
+        try:
+            resolved = self.get_resolved(parts)
+        except (KeyError, IndexError, TypeError):
+            return False
+
+        node = resolved.contents
+        if isinstance(node, dict):
+            return key in node
+        if isinstance(node, list):
+            return isinstance(key, int) and 0 <= key < len(node)
+        return False
+
+    def require_child(self, parts: Sequence[LookupKey], key: LookupKey) -> None:
+        # Validate parent path for intermediate diagnostics.
+        resolved = self.get_resolved(parts)
+        node = resolved.contents
+
+        if isinstance(node, dict):
+            if key not in node:
+                raise KeyError(key)
+            return
+        if isinstance(node, list):
+            if not (isinstance(key, int) and 0 <= key < len(node)):
+                raise KeyError(key)
+            return
+
+        raise KeyError(key)
 
     def read(self, parts: Sequence[LookupKey]) -> LookupValue:
-        resolved = self.get_resolved(pdeque(parts))
+        resolved = self.get_resolved(parts)
         return self._read_node(resolved.contents)
 
     @contextmanager
@@ -83,18 +144,12 @@ class SchemaAccessor(LookupAccessor):
         self, parts: Sequence[LookupKey]
     ) -> Iterator[Resolved[LookupNode]]:
         try:
-            yield self.get_resolved(pdeque(parts))
+            yield self.get_resolved(parts)
         finally:
             pass
 
-    def get_node(self, parts: PDeque[LookupKey]) -> LookupNode:
-        resolved = self.get_resolved(parts)
-        return resolved.contents
-
-    def get_resolved(self, parts: PDeque[LookupKey]) -> Resolved[LookupNode]:
-        resolved = self._get_resolved(
-            self.node, pdeque(parts), resolver=self.resolver
-        )
+    def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
+        resolved = self._get_resolved(self.node, parts, resolver=self.resolver)
         self.resolver = self.resolver._evolve(
             self.resolver._base_uri,
             registry=resolved.resolver._registry,
@@ -102,33 +157,28 @@ class SchemaAccessor(LookupAccessor):
         return resolved
 
     @classmethod
-    def _get_node(
-        cls,
-        node: LookupNode,
-        parts: PDeque[LookupKey],
-        resolver: Optional[Resolver[Schema]] = None,
-    ) -> LookupNode:
-        resolved = cls._get_resolved(node, parts, resolver)
-        return resolved.contents
-
-    @classmethod
     def _get_resolved(
         cls,
         node: LookupNode,
-        parts: PDeque[LookupKey],
+        parts: Sequence[LookupKey],
         resolver: Optional[Resolver[Schema]] = None,
     ) -> Resolved[LookupNode]:
-        if resolver is not None:
-            resolved = cls._resolve_node(node, resolver)
-            node, resolver = resolved.contents, resolved.resolver
+        if resolver is None:
+            raise ValueError("resolver must be provided")
 
-        try:
-            part, parts = cls._pop_next_part(parts)
-        except IndexError:
-            return Resolved(node, resolver)  # type: ignore
+        current_node: LookupNode = node
+        current_resolver: Resolver[Schema] = resolver
 
-        subnode = cls._get_subnode(node, part)
-        return cls._get_resolved(subnode, parts, resolver=resolver)
+        for part in parts:
+            resolved = cls._resolve_node(current_node, current_resolver)
+            current_node, current_resolver = (
+                resolved.contents,
+                resolved.resolver,
+            )
+            current_node = cls._get_subnode(current_node, part)
+
+        resolved = cls._resolve_node(current_node, current_resolver)
+        return cast(Resolved[LookupNode], resolved)
 
     @classmethod
     def _resolve_node(

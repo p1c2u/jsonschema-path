@@ -107,14 +107,6 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         with self.open() as d:
             return d
 
-    def exists(self) -> bool:
-        try:
-            self.contents()
-        except KeyError:
-            return False
-        else:
-            return True
-
     def as_uri(self) -> str:
         return f"#/{str(self)}"
 
