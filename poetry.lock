@@ -791,14 +791,14 @@ testing = ["docopt", "pytest"]
 
 [[package]]
 name = "pathable"
-version = "0.5.0b5"
+version = "0.5.0b6"
 description = "Object-oriented paths"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pathable-0.5.0b5-py3-none-any.whl", hash = "sha256:6f94d89257a065f2f06ed72142e0d112433aaaa93e534264c91f7065fa3e7e9c"},
-    {file = "pathable-0.5.0b5.tar.gz", hash = "sha256:5459350562b978de2ad4f5f7254963e9ca8b0d60cff3d3bb5e293e2148bb4f4a"},
+    {file = "pathable-0.5.0b6-py3-none-any.whl", hash = "sha256:c66bafb0e93b790098e580a1c89e042a24148d6541098f18d24ae1fc77e1b335"},
+    {file = "pathable-0.5.0b6.tar.gz", hash = "sha256:a36763b534a213894ddbca01db5b869aca52779e89a193078304fb3706b94404"},
 ]
 
 [[package]]

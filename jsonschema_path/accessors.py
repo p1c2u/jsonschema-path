@@ -53,13 +53,8 @@ class SchemaAccessor(LookupAccessor):
         resolver = registry.resolver(base_uri=base_uri)
         return cls(schema, resolver)
 
-    def __getitem__(self, parts: Sequence[LookupKey]) -> None:
-        """Validate that the node at `parts` exists.
-
-        This performs a traversal only and raises `KeyError` (with the failing
-        part when available) if the path is missing or non-traversable.
-        """
-        self._get_node(self.node, parts, self.resolver)
+    def __getitem__(self, parts: Sequence[LookupKey]) -> LookupNode:
+        return self._get_node(self.node, parts, self.resolver)
 
     def stat(self, parts: Sequence[Hashable]) -> Optional[dict[str, Any]]:
         try:
