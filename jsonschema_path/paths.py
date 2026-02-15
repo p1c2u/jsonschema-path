@@ -1,5 +1,7 @@
 """JSONSchema spec paths module."""
 
+from __future__ import annotations
+
 import os
 import warnings
 from contextlib import contextmanager
@@ -7,10 +9,9 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 from typing import Iterator
-from typing import Optional
 from typing import Sequence
-from typing import Type
 from typing import TypeVar
+from typing import overload
 
 from pathable import AccessorPath
 from referencing import Specification
@@ -29,6 +30,7 @@ from jsonschema_path.typing import SchemaKey
 from jsonschema_path.typing import SchemaNode
 from jsonschema_path.typing import SchemaValue
 
+TDefault = TypeVar("TDefault")
 # Python 3.11+ shortcut: typing.Self
 TSchemaPath = TypeVar("TSchemaPath", bound="SchemaPath")
 
@@ -94,15 +96,15 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
 
     @classmethod
     def from_dict(
-        cls: Type[TSchemaPath],
+        cls: type[TSchemaPath],
         data: Schema,
         *args: Any,
         separator: str = SPEC_SEPARATOR,
         specification: Specification[Schema] = DRAFT202012,
         base_uri: str = "",
         handlers: ResolverHandlers = default_handlers,
-        spec_url: Optional[str] = None,
-        ref_resolver_handlers: Optional[ResolverHandlers] = None,
+        spec_url: str | None = None,
+        ref_resolver_handlers: ResolverHandlers | None = None,
     ) -> TSchemaPath:
         if spec_url is not None:
             warnings.warn(
@@ -129,7 +131,7 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
 
     @classmethod
     def from_path(
-        cls: Type[TSchemaPath],
+        cls: type[TSchemaPath],
         path: Path,
     ) -> TSchemaPath:
         reader = PathReader(path)
@@ -138,7 +140,7 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
 
     @classmethod
     def from_file_path(
-        cls: Type[TSchemaPath],
+        cls: type[TSchemaPath],
         file_path: str,
     ) -> TSchemaPath:
         reader = FilePathReader(file_path)
@@ -147,10 +149,10 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
 
     @classmethod
     def from_file(
-        cls: Type[TSchemaPath],
+        cls: type[TSchemaPath],
         fileobj: SupportsRead,
         base_uri: str = "",
-        spec_url: Optional[str] = None,
+        spec_url: str | None = None,
     ) -> TSchemaPath:
         reader = FileReader(fileobj)
         data, _ = reader.read()
@@ -161,8 +163,22 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
             "'contents' method is deprecated. Use 'read_value' instead.",
             DeprecationWarning,
         )
-        with self.open() as d:
-            return d
+        return self.read_value()
+
+    @overload
+    def getkey(self, key: SchemaKey) -> SchemaValue | None: ...
+
+    @overload
+    def getkey(
+        self, key: SchemaKey, default: TDefault
+    ) -> SchemaValue | TDefault: ...
+
+    def getkey(self, key: SchemaKey, default: object = None) -> object:
+        warnings.warn(
+            "'getkey' method is deprecated. Use 'get' instead.",
+            DeprecationWarning,
+        )
+        return self.get(key, default=default)
 
     def as_uri(self) -> str:
         return f"#/{str(self)}"
