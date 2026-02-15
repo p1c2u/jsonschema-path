@@ -129,3 +129,22 @@ class TestSchemaPathFromFilePath:
         sp = SchemaPath.from_file_path(schema_file_path_str)
 
         assert_sp(sp, schema, base_uri=schema_file_uri)
+
+
+class TestSchemaPathGetkey:
+    def test_returns_node(self, create_file):
+        schema = {"a": {"b": 1}}
+        schema_file_path_str = create_file(schema)
+        sp = SchemaPath.from_file_path(schema_file_path_str)
+
+        node = sp.getkey("a")
+        assert isinstance(node, SchemaPath)
+        assert node.parts == ("a",)
+
+    def test_returns_value(self, create_file):
+        schema = {"a": {"b": 1}}
+        schema_file_path_str = create_file(schema)
+        sp = SchemaPath.from_file_path(schema_file_path_str) // "a"
+
+        value = sp.getkey("b")
+        assert value == 1
