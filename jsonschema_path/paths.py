@@ -174,11 +174,11 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
     ) -> SchemaValue | TDefault: ...
 
     def getkey(self, key: SchemaKey, default: object = None) -> object:
-        warnings.warn(
-            "'getkey' method is deprecated. Use 'get' instead.",
-            DeprecationWarning,
-        )
-        return self.get(key, default=default)
+        try:
+            path = self // key
+        except KeyError:
+            return default
+        return path.read_value()
 
     def as_uri(self) -> str:
         return f"#/{str(self)}"

@@ -132,14 +132,13 @@ class TestSchemaPathFromFilePath:
 
 
 class TestSchemaPathGetkey:
-    def test_returns_node(self, create_file):
+    def test_returns_nested_value(self, create_file):
         schema = {"a": {"b": 1}}
         schema_file_path_str = create_file(schema)
         sp = SchemaPath.from_file_path(schema_file_path_str)
 
-        node = sp.getkey("a")
-        assert isinstance(node, SchemaPath)
-        assert node.parts == ("a",)
+        value = sp.getkey("a")
+        assert value == {"b": 1}
 
     def test_returns_value(self, create_file):
         schema = {"a": {"b": 1}}
