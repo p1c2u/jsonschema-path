@@ -81,7 +81,7 @@ jobs:
             --warmup-loops "$warmup"
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: jsonschema-path-bench-results
           path: reports/bench-*.json
