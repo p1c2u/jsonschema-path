@@ -205,6 +205,36 @@ class TestSchemaPathReadBool:
         assert sp.read_bool(default=default) is default
 
 
+class TestSchemaPathReadStrOrList:
+    def test_returns_string_value(self):
+        sp = SchemaPath.from_dict({"value": "test"}) // "value"
+
+        assert sp.read_str_or_list() == "test"
+
+    def test_returns_list_value(self):
+        sp = SchemaPath.from_dict({"value": ["a", "b"]}) // "value"
+
+        assert sp.read_str_or_list() == ["a", "b"]
+
+    def test_missing_key_raises(self):
+        sp = SchemaPath.from_dict({})
+
+        with pytest.raises(KeyError):
+            (sp // "missing").read_str_or_list()
+
+    def test_missing_key_returns_default(self):
+        sp = SchemaPath.from_dict({})
+        default = mock.sentinel.default
+
+        assert (sp / "missing").read_str_or_list(default=default) is default
+
+    def test_non_string_or_list_raises(self):
+        sp = SchemaPath.from_dict({"value": 1}) // "value"
+
+        with pytest.raises(TypeError):
+            sp.read_str_or_list()
+
+
 class TestSchemaPathHelpers:
     def test_as_uri(self):
         sp = SchemaPath.from_dict({"a": {"b": 1}}) // "a" // "b"
