@@ -29,12 +29,14 @@ from jsonschema_path.typing import Schema
 from jsonschema_path.typing import SchemaKey
 from jsonschema_path.typing import SchemaNode
 from jsonschema_path.typing import SchemaValue
+from jsonschema_path.typing import is_str_sequence
 
 TDefault = TypeVar("TDefault")
 # Python 3.11+ shortcut: typing.Self
 TSchemaPath = TypeVar("TSchemaPath", bound="SchemaPath")
 
 SPEC_SEPARATOR = "#"
+NOTSET = object()
 
 
 class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
@@ -59,6 +61,9 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
                 append(a)
                 continue
 
+            if isinstance(a, bytes):
+                a = a.decode("ascii")
+
             if isinstance(a, str):
                 if a and a != ".":
                     if sep in a:
@@ -68,9 +73,6 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
                     else:
                         append(a)
                 continue
-
-            if isinstance(a, bytes):
-                a = a.decode("ascii")
 
             # PathLike is relatively expensive to check; keep it after common types.
             if isinstance(a, os.PathLike):
@@ -158,27 +160,55 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         data, _ = reader.read()
         return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
 
-    def contents(self) -> Any:
-        warnings.warn(
-            "'contents' method is deprecated. Use 'read_value' instead.",
-            DeprecationWarning,
-        )
-        return self.read_value()
+    def str_keys(self) -> Sequence[str]:
+        keys = list(self.keys())
+        if not is_str_sequence(keys):
+            raise TypeError(
+                f"Expected string keys, got {[type(x) for x in keys]}"
+            )
+        return keys
+
+    def str_items(self) -> Iterator[tuple[str, SchemaPath]]:
+        for key, value in self.items():
+            if not isinstance(key, str):
+                raise TypeError(f"Expected string keys, got {type(key)}")
+            yield key, value
 
     @overload
-    def getkey(self, key: SchemaKey) -> SchemaValue | None: ...
+    def read_str(self) -> str: ...
 
     @overload
-    def getkey(
-        self, key: SchemaKey, default: TDefault
-    ) -> SchemaValue | TDefault: ...
+    def read_str(self, default: TDefault) -> str | TDefault: ...
 
-    def getkey(self, key: SchemaKey, default: object = None) -> object:
+    def read_str(self, default: object = NOTSET) -> object:
         try:
-            path = self // key
+            value = self.read_value()
         except KeyError:
-            return default
-        return path.read_value()
+            if default is not NOTSET:
+                return default
+            raise
+        if not isinstance(value, str):
+            raise TypeError(f"Expected a string value, got {type(value)}")
+        return value
+
+    @overload
+    def read_bool(self) -> bool: ...
+
+    @overload
+    def read_bool(self, default: TDefault) -> bool | TDefault: ...
+
+    def read_bool(self, default: object = NOTSET) -> object:
+        try:
+            value = self.read_value()
+        except KeyError:
+            if default is not NOTSET:
+                return default
+            raise
+        if not isinstance(value, bool):
+            if default is not NOTSET:
+                return default
+            raise TypeError(f"Expected a bool value, got {type(value)}")
+        return value
 
     def as_uri(self) -> str:
         return f"#/{str(self)}"

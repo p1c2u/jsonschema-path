@@ -46,6 +46,7 @@ python = ">=3.9.0,<4.0.0"
 PyYAML = ">=5.1"
 requests = {version = "^2.31.0", optional = true}
 referencing = "<0.37.0"
+typing-extensions = {version = "^4.10.0", python = "<3.10"}
 
 [tool.poetry.group.dev.dependencies]
 tbump = "^6.11.0"
@@ -59,7 +60,6 @@ flynt = "1.0.2"
 mypy = "^1.14.1"
 types-PyYAML = "^6.0.12"
 types-requests = "^2.31.0"
-typing-extensions = "^4.10.0"  # required by responses. See https://github.com/p1c2u/jsonschema-path/issues/44
 responses = "^0.25.0"
 deptry = ">=0.19.1,<0.24.0"
 pyflakes = ">=2.5,<4.0"
