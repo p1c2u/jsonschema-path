@@ -192,6 +192,27 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         return value
 
     @overload
+    def read_str_or_list(self) -> str | list[str]: ...
+
+    @overload
+    def read_str_or_list(
+        self, default: TDefault
+    ) -> str | list[str] | TDefault: ...
+
+    def read_str_or_list(self, default: object = NOTSET) -> object:
+        try:
+            value = self.read_value()
+        except KeyError:
+            if default is not NOTSET:
+                return default
+            raise
+        if not isinstance(value, (str, list)):
+            raise TypeError(
+                f"Expected a string or a list of strings, got {type(value)}"
+            )
+        return value
+
+    @overload
     def read_bool(self) -> bool: ...
 
     @overload
