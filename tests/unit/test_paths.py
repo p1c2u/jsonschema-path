@@ -137,7 +137,7 @@ class TestSchemaPathGetkey:
         schema_file_path_str = create_file(schema)
         sp = SchemaPath.from_file_path(schema_file_path_str)
 
-        value = sp.getkey("a")
+        value = (sp // "a").read_value()
         assert value == {"b": 1}
 
     def test_returns_value(self, create_file):
@@ -145,5 +145,109 @@ class TestSchemaPathGetkey:
         schema_file_path_str = create_file(schema)
         sp = SchemaPath.from_file_path(schema_file_path_str) // "a"
 
-        value = sp.getkey("b")
+        value = sp.get("b")
         assert value == 1
+
+
+class TestSchemaPathReadStr:
+    def test_returns_string_value(self):
+        sp = SchemaPath.from_dict({"name": "test"}) // "name"
+
+        assert sp.read_str() == "test"
+
+    def test_missing_key_raises(self):
+        sp = SchemaPath.from_dict({})
+
+        with pytest.raises(KeyError):
+            (sp // "missing").read_str()
+
+    def test_missing_key_returns_default(self):
+        sp = SchemaPath.from_dict({})
+        default = mock.sentinel.default
+
+        assert (sp / "missing").read_str(default=default) is default
+
+    def test_non_string_raises(self):
+        sp = SchemaPath.from_dict({"name": 1}) // "name"
+
+        with pytest.raises(TypeError):
+            sp.read_str()
+
+
+class TestSchemaPathReadBool:
+    def test_returns_bool_value(self):
+        sp = SchemaPath.from_dict({"enabled": True}) // "enabled"
+
+        assert sp.read_bool() is True
+
+    def test_missing_key_raises(self):
+        sp = SchemaPath.from_dict({})
+
+        with pytest.raises(KeyError):
+            (sp // "missing").read_bool()
+
+    def test_missing_key_returns_default(self):
+        sp = SchemaPath.from_dict({})
+        default = mock.sentinel.default
+
+        assert (sp / "missing").read_bool(default=default) is default
+
+    def test_non_bool_raises_without_default(self):
+        sp = SchemaPath.from_dict({"enabled": "yes"}) // "enabled"
+
+        with pytest.raises(TypeError):
+            sp.read_bool()
+
+    def test_non_bool_returns_default(self):
+        sp = SchemaPath.from_dict({"enabled": "yes"}) // "enabled"
+        default = mock.sentinel.default
+
+        assert sp.read_bool(default=default) is default
+
+
+class TestSchemaPathHelpers:
+    def test_as_uri(self):
+        sp = SchemaPath.from_dict({"a": {"b": 1}}) // "a" // "b"
+
+        assert sp.as_uri() == "#/a#b"
+
+    def test_str_keys(self):
+        sp = SchemaPath.from_dict({"a": 1, "b": 2})
+
+        assert set(sp.str_keys()) == {"a", "b"}
+
+    def test_str_items(self):
+        sp = SchemaPath.from_dict({"a": 1})
+        key, child = list(sp.str_items())[0]
+
+        assert key == "a"
+        assert isinstance(child, SchemaPath)
+        assert child.read_value() == 1
+
+
+class TestSchemaPathParseArgs:
+    def test_flattens_schema_path(self):
+        base = SchemaPath.from_dict({"a": {"b": 1}}) // "a"
+
+        parsed = SchemaPath._parse_args([base, "b"])
+
+        assert parsed == ("a", "b")
+
+    def test_accepts_bytes(self):
+        parsed = SchemaPath._parse_args([b"a"])
+
+        assert parsed == ("a",)
+
+    def test_accepts_pathlike(self):
+        parsed = SchemaPath._parse_args([Path("a")])
+
+        assert parsed == ("a",)
+
+    def test_skips_empty_and_dot(self):
+        parsed = SchemaPath._parse_args(["", ".", "a#.#b##"])
+
+        assert parsed == ("a", "b")
+
+    def test_raises_on_unsupported_type(self):
+        with pytest.raises(TypeError):
+            SchemaPath._parse_args([object()])

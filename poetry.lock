@@ -1469,6 +1469,7 @@ files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
+markers = {main = "python_version < \"3.13\""}
 
 [[package]]
 name = "unidecode"
@@ -1544,4 +1545,4 @@ requests = ["requests"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<4.0.0"
-content-hash = "252e1716c7f466db2d9644b40950370f02994e7cb7e4d594b2dfb6a8aaa645d9"
+content-hash = "2e8575b9e8428a286dabf6c103c6a694c861a99681b26f593485b3e991eb4104"

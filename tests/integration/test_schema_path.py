@@ -336,30 +336,3 @@ class TestSchemaPathOpen:
             assert resolved.contents == expected_contents
         with property_schema_path.open() as contents:
             assert contents == expected_contents
-
-
-class TestSchemaPathContents:
-    def test_dict(self, defs):
-        schema = {
-            "properties": {
-                "info": {
-                    "$ref": "#/$defs/Info",
-                },
-            },
-            "$defs": defs,
-        }
-        path = SchemaPath.from_dict(schema)
-
-        assert "properties" in path
-
-        info_path = path / "properties" / "info"
-
-        assert "properties" in info_path
-
-        version_path = info_path / "properties" / "version"
-
-        expected_contents = {"type": "string", "default": "1.0"}
-
-        contents = version_path.contents()
-
-        assert contents == expected_contents
