@@ -3,8 +3,6 @@
 from contextlib import closing
 from io import StringIO
 from typing import ContextManager
-from typing import Optional
-from typing import Union
 
 import requests
 
@@ -19,9 +17,9 @@ class UrlRequestsHandler(BaseFilePathHandler):
     def __init__(
         self,
         *allowed_schemes: str,
-        file_handler: Optional[FileHandler] = None,
+        file_handler: FileHandler | None = None,
         timeout: int = 10,
-        verify: Optional[Union[bool, str]] = True,
+        verify: bool | str | None = True,
     ):
         super().__init__(*allowed_schemes, file_handler=file_handler)
         self.timeout = timeout

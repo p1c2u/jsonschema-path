@@ -1,9 +1,7 @@
 # Use CSafeFile if available
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import Tuple
 
 if TYPE_CHECKING:
     from yaml import SafeLoader
@@ -25,8 +23,8 @@ class LimitedSafeLoader(type):
     def __new__(
         cls,
         name: str,
-        bases: Tuple[type, ...],
-        namespace: Dict[str, Any],
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
         exclude_resolvers: Iterable[str],
     ) -> "LimitedSafeLoader":
         exclude_resolvers = set(exclude_resolvers)

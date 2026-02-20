@@ -4,8 +4,6 @@ from json import dumps
 from json import loads
 from typing import Any
 from typing import ContextManager
-from typing import Optional
-from typing import Tuple
 from urllib.parse import urlparse
 
 from yaml import load
@@ -32,10 +30,10 @@ class FileHandler:
 class BaseFilePathHandler:
     """Base file path handler."""
 
-    allowed_schemes: Tuple[str, ...] = NotImplemented
+    allowed_schemes: tuple[str, ...] = NotImplemented
 
     def __init__(
-        self, *allowed_schemes: str, file_handler: Optional[FileHandler] = None
+        self, *allowed_schemes: str, file_handler: FileHandler | None = None
     ):
         self.allowed_schemes = allowed_schemes or self.allowed_schemes
         self.file_handler = file_handler or FileHandler()
@@ -60,7 +58,7 @@ class FilePathHandler(BaseFilePathHandler):
     def __init__(
         self,
         *allowed_schemes: str,
-        file_handler: Optional[FileHandler] = None,
+        file_handler: FileHandler | None = None,
         encoding: str = "utf-8",
     ):
         super().__init__(*allowed_schemes, file_handler=file_handler)

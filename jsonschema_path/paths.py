@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import os
 import warnings
+from collections.abc import Iterator
+from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 from typing import Any
-from typing import Iterator
-from typing import Sequence
 from typing import TypeVar
 from typing import overload
 

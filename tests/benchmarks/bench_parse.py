@@ -1,8 +1,8 @@
 """Benchmarks for parsing and SchemaPath construction."""
 
 import argparse
+from collections.abc import Iterable
 from typing import Any
-from typing import Iterable
 
 from pathable import parsers
 

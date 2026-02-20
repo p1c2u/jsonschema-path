@@ -7,10 +7,10 @@ This mirrors `pathable/tests/benchmarks/compare_results.py`.
 
 import argparse
 import json
+from collections.abc import Iterable
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
-from typing import Iterable
-from typing import Mapping
 from typing import cast
 
 
