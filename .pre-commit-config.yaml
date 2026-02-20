@@ -13,7 +13,7 @@ repos:
     rev: v2.38.4
     hooks:
       - id: pyupgrade
-        args: ["--py36-plus"]
+        args: ["--py310-plus"]
 
   - repo: local
     hooks:
