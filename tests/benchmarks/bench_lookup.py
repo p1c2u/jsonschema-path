@@ -8,8 +8,8 @@ Focus areas:
 """
 
 import argparse
+from collections.abc import Iterable
 from typing import Any
-from typing import Iterable
 
 from jsonschema_path.paths import SchemaPath
 

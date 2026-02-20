@@ -2,7 +2,6 @@
 
 from contextlib import closing
 from typing import ContextManager
-from typing import Optional
 from urllib.request import urlopen
 
 from jsonschema_path.handlers.file import BaseFilePathHandler
@@ -16,7 +15,7 @@ class UrllibHandler(BaseFilePathHandler):
     def __init__(
         self,
         *allowed_schemes: str,
-        file_handler: Optional[FileHandler] = None,
+        file_handler: FileHandler | None = None,
         timeout: int = 10
     ):
         super().__init__(*allowed_schemes, file_handler=file_handler)

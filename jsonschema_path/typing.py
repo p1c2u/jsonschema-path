@@ -1,6 +1,6 @@
+from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Any
-from typing import Mapping
-from typing import Sequence
 from typing import TypeGuard
 
 from pathable.types import LookupKey as SchemaKey

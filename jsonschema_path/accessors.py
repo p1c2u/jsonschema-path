@@ -1,11 +1,10 @@
 """JSONSchema spec accessors module."""
 
 from collections.abc import Hashable
+from collections.abc import Iterator
 from collections.abc import Sequence
 from contextlib import contextmanager
 from typing import Any
-from typing import Iterator
-from typing import Optional
 from typing import cast
 
 from pathable.accessors import LookupAccessor
@@ -26,7 +25,7 @@ from jsonschema_path.utils import is_ref
 
 
 class SchemaAccessor(LookupAccessor):
-    _resolver_refs: dict[int, Optional[Resolver[Schema]]] = {}
+    _resolver_refs: dict[int, Resolver[Schema] | None] = {}
 
     def __init__(self, schema: Schema, resolver: Resolver[Schema]):
         super().__init__(cast(LookupNode, schema))
@@ -40,7 +39,7 @@ class SchemaAccessor(LookupAccessor):
         schema: Schema,
         specification: Specification[Schema] = DRAFT202012,
         base_uri: str = "",
-        handlers: Optional[ResolverHandlers] = None,
+        handlers: ResolverHandlers | None = None,
     ) -> "SchemaAccessor":
         if handlers is None:
             handlers = default_handlers
@@ -56,7 +55,7 @@ class SchemaAccessor(LookupAccessor):
     def __getitem__(self, parts: Sequence[LookupKey]) -> LookupNode:
         return self._get_node(self.node, parts, self.resolver)
 
-    def stat(self, parts: Sequence[Hashable]) -> Optional[dict[str, Any]]:
+    def stat(self, parts: Sequence[Hashable]) -> dict[str, Any] | None:
         try:
             resolved = self.get_resolved(cast(Sequence[LookupKey], parts))
         except (KeyError, IndexError, TypeError):
@@ -161,7 +160,7 @@ class SchemaAccessor(LookupAccessor):
         cls,
         node: LookupNode,
         parts: Sequence[LookupKey],
-        resolver: Optional[Resolver[Schema]] = None,
+        resolver: Resolver[Schema] | None = None,
     ) -> Resolved[LookupNode]:
         if resolver is None:
             raise ValueError("resolver must be provided")
@@ -201,7 +200,7 @@ class SchemaAccessor(LookupAccessor):
         cls,
         node: LookupNode,
         parts: Sequence[LookupKey],
-        resolver: Optional[Resolver[Schema]] = None,
+        resolver: Resolver[Schema] | None = None,
     ) -> LookupNode:
         if resolver is None:
             raise ValueError("resolver must be provided")
