@@ -53,15 +53,14 @@ class SchemaAccessor(LookupAccessor):
         return cls(schema, resolver)
 
     def __getitem__(self, parts: Sequence[LookupKey]) -> LookupNode:
-        return self._get_node(self.node, parts, self.resolver)
+        resolved = self.get_resolved(parts)
+        return resolved.contents
 
     def stat(self, parts: Sequence[Hashable]) -> dict[str, Any] | None:
         try:
-            resolved = self.get_resolved(cast(Sequence[LookupKey], parts))
+            node = self[cast(Sequence[LookupKey], parts)]
         except (KeyError, IndexError, TypeError):
             return None
-
-        node = resolved.contents
 
         if self._is_traversable_node(node):
             return {
@@ -79,8 +78,7 @@ class SchemaAccessor(LookupAccessor):
         }
 
     def keys(self, parts: Sequence[LookupKey]) -> Sequence[LookupKey]:
-        resolved = self.get_resolved(parts)
-        node = resolved.contents
+        node = self[parts]
 
         if isinstance(node, dict):
             # dict_keys has O(1) membership, no allocation.
@@ -95,8 +93,7 @@ class SchemaAccessor(LookupAccessor):
         raise KeyError
 
     def len(self, parts: Sequence[LookupKey]) -> int:
-        resolved = self.get_resolved(parts)
-        node = resolved.contents
+        node = self[parts]
         if isinstance(node, (dict, list)):
             return len(node)
         if parts:
@@ -105,11 +102,10 @@ class SchemaAccessor(LookupAccessor):
 
     def contains(self, parts: Sequence[LookupKey], key: LookupKey) -> bool:
         try:
-            resolved = self.get_resolved(parts)
+            node = self[parts]
         except (KeyError, IndexError, TypeError):
             return False
 
-        node = resolved.contents
         if isinstance(node, dict):
             return key in node
         if isinstance(node, list):
@@ -120,8 +116,7 @@ class SchemaAccessor(LookupAccessor):
         self, parts: Sequence[LookupKey], key: LookupKey
     ) -> None:
         # Validate parent path for intermediate diagnostics.
-        resolved = self.get_resolved(parts)
-        node = resolved.contents
+        node = self[parts]
 
         if isinstance(node, dict):
             if key not in node:
@@ -135,8 +130,8 @@ class SchemaAccessor(LookupAccessor):
         raise KeyError(key)
 
     def read(self, parts: Sequence[LookupKey]) -> LookupValue:
-        resolved = self.get_resolved(parts)
-        return self._read_node(resolved.contents)
+        node = self[parts]
+        return self._read_node(node)
 
     @contextmanager
     def resolve(
@@ -194,25 +189,3 @@ class SchemaAccessor(LookupAccessor):
                 resolved.resolver,
             )
         return Resolved(cast(Schema, node), resolver)  # type: ignore
-
-    @classmethod
-    def _get_node(
-        cls,
-        node: LookupNode,
-        parts: Sequence[LookupKey],
-        resolver: Resolver[Schema] | None = None,
-    ) -> LookupNode:
-        if resolver is None:
-            raise ValueError("resolver must be provided")
-
-        current_node: LookupNode = node
-        current_resolver: Resolver[Schema] = resolver
-
-        for part in parts:
-            resolved = cls._resolve_node(current_node, current_resolver)
-            current_node, current_resolver = (
-                resolved.contents,
-                resolved.resolver,
-            )
-            current_node = cls._get_subnode(current_node, part)
-        return current_node
