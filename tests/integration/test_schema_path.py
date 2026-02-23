@@ -123,6 +123,74 @@ class TestSchemaPathAsUri:
         assert path.as_uri() == "#/properties#info#properties"
 
 
+class TestSchemaPathGetitem:
+    def test_getitem_resolves_ref(self, defs):
+        """Thsi tests verifies that path["key"] on a $ref node resolves correctly to the referenced node, and that the returned node is cached for subsequent access."""
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+            "$defs": defs,
+        }
+        path = SchemaPath.from_dict(schema)
+
+        info_ref_path = path["properties"]["info"]
+
+        child_path = info_ref_path["properties"]
+        with child_path.open() as contents:
+            assert contents == {
+                "version": {
+                    "type": "string",
+                    "default": "1.0",
+                },
+            }
+
+    def test_getitem_keys_consistent_with_ref(self, defs):
+        """This tests verifies __getitem__ and keys() return consistent results for a $ref node, and that the keys are consistent with the referenced node."""
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+            "$defs": defs,
+        }
+        path = SchemaPath.from_dict(schema)
+
+        info_ref_path = path["properties"]["info"]
+
+        with info_ref_path.open() as contents:
+            keys_via_open = list(contents.keys())
+        keys_via_keys = list(info_ref_path.keys())
+
+        assert keys_via_open == keys_via_keys == ["properties"]
+
+    def test_getitem_updates_resolver_state(self, defs):
+        """Test that multiple __getitem__ calls properly update resolver state."""
+        schema = {
+            "properties": {
+                "info": {
+                    "$ref": "#/$defs/Info",
+                },
+            },
+            "$defs": defs,
+        }
+        path = SchemaPath.from_dict(schema)
+
+        info_path = path["properties"]["info"]
+        with info_path.open() as contents:
+            assert contents == {
+                "properties": {
+                    "version": {
+                        "type": "string",
+                        "default": "1.0",
+                    },
+                },
+            }
+
+
 class TestSchemaPathOpen:
     def test_dict(self, defs):
         schema = {
