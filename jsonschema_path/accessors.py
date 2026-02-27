@@ -144,10 +144,11 @@ class SchemaAccessor(LookupAccessor):
 
     def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
         resolved = self._get_resolved(self.node, parts, resolver=self.resolver)
-        self.resolver = self.resolver._evolve(
-            self.resolver._base_uri,
-            registry=resolved.resolver._registry,
-        )
+        if resolved.resolver._registry is not self.resolver._registry:
+            self.resolver = self.resolver._evolve(
+                self.resolver._base_uri,
+                registry=resolved.resolver._registry,
+            )
         return resolved
 
     @classmethod
