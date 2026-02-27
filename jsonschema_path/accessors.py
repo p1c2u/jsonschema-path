@@ -1,5 +1,6 @@
 """JSONSchema spec accessors module."""
 
+from collections import OrderedDict
 from collections.abc import Hashable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -27,9 +28,23 @@ from jsonschema_path.utils import is_ref
 class SchemaAccessor(LookupAccessor):
     _resolver_refs: dict[int, Resolver[Schema] | None] = {}
 
-    def __init__(self, schema: Schema, resolver: Resolver[Schema]):
+    def __init__(
+        self,
+        schema: Schema,
+        resolver: Resolver[Schema],
+        resolved_cache_maxsize: int = 0,
+    ):
+        if resolved_cache_maxsize < 0:
+            raise ValueError("resolved_cache_maxsize must be >= 0")
+
         super().__init__(cast(LookupNode, schema))
         self.resolver = resolver
+        self._resolved_cache_maxsize = resolved_cache_maxsize
+        self._resolved_cache: OrderedDict[
+            tuple[tuple[LookupKey, ...], int],
+            Resolved[LookupNode],
+        ] = OrderedDict()
+        self._resolver_version = 0
 
         self._resolver_refs[id(schema)] = resolver
 
@@ -40,6 +55,7 @@ class SchemaAccessor(LookupAccessor):
         specification: Specification[Schema] = DRAFT202012,
         base_uri: str = "",
         handlers: ResolverHandlers | None = None,
+        resolved_cache_maxsize: int = 0,
     ) -> "SchemaAccessor":
         if handlers is None:
             handlers = default_handlers
@@ -50,7 +66,11 @@ class SchemaAccessor(LookupAccessor):
         )
         registry = registry.with_resource(base_uri, base_resource)
         resolver = registry.resolver(base_uri=base_uri)
-        return cls(schema, resolver)
+        return cls(
+            schema,
+            resolver,
+            resolved_cache_maxsize=resolved_cache_maxsize,
+        )
 
     def __getitem__(self, parts: Sequence[LookupKey]) -> LookupNode:
         resolved = self.get_resolved(parts)
@@ -143,13 +163,45 @@ class SchemaAccessor(LookupAccessor):
             pass
 
     def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
+        cache_key = self._resolved_cache_key(parts)
+        if cache_key is not None:
+            cached_resolved = self._resolved_cache.get(cache_key)
+            if cached_resolved is not None:
+                self._resolved_cache.move_to_end(cache_key)
+                return cached_resolved
+
         resolved = self._get_resolved(self.node, parts, resolver=self.resolver)
         if resolved.resolver._registry is not self.resolver._registry:
             self.resolver = self.resolver._evolve(
                 self.resolver._base_uri,
                 registry=resolved.resolver._registry,
             )
+            self._resolver_version += 1
+            self._resolved_cache.clear()
+
+        cache_key = self._resolved_cache_key(parts)
+        if cache_key is not None:
+            self._resolved_cache[cache_key] = resolved
+            self._resolved_cache.move_to_end(cache_key)
+            if len(self._resolved_cache) > self._resolved_cache_maxsize:
+                self._resolved_cache.popitem(last=False)
+
         return resolved
+
+    def _resolved_cache_key(
+        self,
+        parts: Sequence[LookupKey],
+    ) -> tuple[tuple[LookupKey, ...], int] | None:
+        if self._resolved_cache_maxsize <= 0:
+            return None
+
+        parts_tuple = tuple(parts)
+        try:
+            hash(parts_tuple)
+        except TypeError:
+            return None
+
+        return (parts_tuple, self._resolver_version)
 
     @classmethod
     def _get_resolved(

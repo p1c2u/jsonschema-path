@@ -54,6 +54,22 @@ def _safe_int_env(name: str) -> int | None:
         return None
 
 
+def safe_nonnegative_int_env(name: str, *, default: int = 0) -> int:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if parsed < 0:
+        raise ValueError(f"{name} must be >= 0")
+
+    return parsed
+
+
 def default_meta() -> dict[str, Any]:
     return {
         "python": sys.version,

@@ -17,15 +17,19 @@ try:
     # Prefer module execution: `python -m tests.benchmarks.bench_lookup ...`
     from .bench_utils import BenchmarkResult
     from .bench_utils import add_common_args
+    from .bench_utils import default_meta
     from .bench_utils import results_to_json
     from .bench_utils import run_benchmark
+    from .bench_utils import safe_nonnegative_int_env
     from .bench_utils import write_json
 except ImportError:  # pragma: no cover
     # Allow direct execution: `python tests/benchmarks/bench_lookup.py ...`
     from bench_utils import BenchmarkResult  # type: ignore[no-redef]
     from bench_utils import add_common_args  # type: ignore[no-redef]
+    from bench_utils import default_meta  # type: ignore[no-redef]
     from bench_utils import results_to_json  # type: ignore[no-redef]
     from bench_utils import run_benchmark  # type: ignore[no-redef]
+    from bench_utils import safe_nonnegative_int_env  # type: ignore[no-redef]
     from bench_utils import write_json  # type: ignore[no-redef]
 
 
@@ -67,6 +71,9 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     repeats: int = args.repeats
     warmup_loops: int = args.warmup_loops
+    resolved_cache_maxsize = safe_nonnegative_int_env(
+        "JSONSCHEMA_PATH_BENCH_RESOLVED_CACHE_MAXSIZE"
+    )
 
     results: list[BenchmarkResult] = []
 
@@ -75,7 +82,10 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     # --- Deep traversal without $ref ---
     plain_schema = _build_deep_tree(depth)
-    plain_root = SchemaPath.from_dict(plain_schema)
+    plain_root = SchemaPath.from_dict(
+        plain_schema,
+        resolved_cache_maxsize=resolved_cache_maxsize,
+    )
     plain_deep = _make_deep_path(plain_root, depth)
 
     results.append(
@@ -105,7 +115,10 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     # --- Deep traversal with a local $ref ---
     ref_schema = _schema_with_local_ref(depth)
-    ref_root = SchemaPath.from_dict(ref_schema)
+    ref_root = SchemaPath.from_dict(
+        ref_schema,
+        resolved_cache_maxsize=resolved_cache_maxsize,
+    )
     ref_deep = _make_deep_path(ref_root / "root", depth)
 
     results.append(
@@ -136,7 +149,13 @@ def main(argv: Iterable[str] | None = None) -> int:
     sizes = [10, 1_000, 50_000] if not args.quick else [10, 1_000]
     for size in sizes:
         mapping = _build_mapping(size)
-        p = SchemaPath.from_dict({"root": mapping}) / "root"
+        p = (
+            SchemaPath.from_dict(
+                {"root": mapping},
+                resolved_cache_maxsize=resolved_cache_maxsize,
+            )
+            / "root"
+        )
 
         loops_keys = 5_000 if size <= 1_000 else 200
         if args.quick:
@@ -188,7 +207,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             )
         )
 
-    payload = results_to_json(results=results)
+    meta = default_meta()
+    meta["resolved_cache_maxsize"] = resolved_cache_maxsize
+    payload = results_to_json(results=results, meta=meta)
     write_json(args.output, payload)
     return 0
 

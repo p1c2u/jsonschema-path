@@ -188,3 +188,63 @@ class TestSchemaAccessorResolverEvolution:
         assert accessor.read(["one", "value"]) == "tested"
         assert accessor.resolver is evolved_resolver
         retrieve.assert_called_once_with("x://testref")
+
+
+class TestSchemaAccessorResolvedCache:
+    def test_disabled_by_default(self):
+        accessor = SchemaAccessor.from_schema({"a": {"b": 1}})
+
+        first = accessor.get_resolved(["a", "b"])
+        second = accessor.get_resolved(["a", "b"])
+
+        assert first is not second
+
+    def test_cache_hit_for_same_parts(self):
+        accessor = SchemaAccessor.from_schema(
+            {"a": {"b": 1}},
+            resolved_cache_maxsize=2,
+        )
+
+        first = accessor.get_resolved(["a", "b"])
+        second = accessor.get_resolved(["a", "b"])
+
+        assert first is second
+
+    def test_lru_eviction(self):
+        accessor = SchemaAccessor.from_schema(
+            {"a": 1, "b": 2},
+            resolved_cache_maxsize=1,
+        )
+
+        first_a = accessor.get_resolved(["a"])
+        _ = accessor.get_resolved(["b"])
+        second_a = accessor.get_resolved(["a"])
+
+        assert first_a is not second_a
+
+    def test_registry_evolution_invalidates_previous_generation(self):
+        retrieve = Mock(side_effect=[{"value": 1}, {"value": 2}])
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {
+                    "$ref": "x://one",
+                },
+                "two": {
+                    "$ref": "x://two",
+                },
+            },
+            handlers={"x": retrieve},
+            resolved_cache_maxsize=8,
+        )
+
+        first_one = accessor.get_resolved(["one", "value"])
+        assert first_one.contents == 1
+
+        second_two = accessor.get_resolved(["two", "value"])
+        assert second_two.contents == 2
+
+        second_one = accessor.get_resolved(["one", "value"])
+        assert second_one.contents == 1
+        assert second_one is not first_one
+
+        assert retrieve.call_count == 2

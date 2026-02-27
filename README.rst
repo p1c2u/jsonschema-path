@@ -90,6 +90,21 @@ Usage
    {'type': 'string', 'default': '1.0'}
 
 
+Resolved cache
+##############
+
+The resolved-path cache is intended for repeated path lookups and may significantly improve
+``read_value``/membership hot paths. Cache entries are invalidated when the
+resolver registry evolves during reference resolution.
+
+This cache is optional and disabled by default
+(``resolved_cache_maxsize=0``). You can enable it when creating paths or
+accessors, for example:
+
+.. code-block:: python
+
+   >>> path = SchemaPath.from_dict(d, resolved_cache_maxsize=64)
+
 Benchmarks
 ##########
 
@@ -110,12 +125,13 @@ For a quick smoke run:
    poetry run python -m tests.benchmarks.bench_parse --output reports/bench-parse.quick.json --quick
    poetry run python -m tests.benchmarks.bench_lookup --output reports/bench-lookup.quick.json --quick
 
-You can also control repeats/warmup via env vars:
+You can also control repeats/warmup and resolved cache maxsize via env vars:
 
 .. code-block:: console
 
    export JSONSCHEMA_PATH_BENCH_REPEATS=5
    export JSONSCHEMA_PATH_BENCH_WARMUP=1
+   export JSONSCHEMA_PATH_BENCH_RESOLVED_CACHE_MAXSIZE=64
 
 Compare two results:
 

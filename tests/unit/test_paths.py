@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 from referencing import Specification
 
+from jsonschema_path.accessors import SchemaAccessor
 from jsonschema_path.paths import SchemaPath
 
 
@@ -46,6 +47,15 @@ class TestSchemaPathFromDict:
         sp = SchemaPath.from_dict(schema, handlers=handlers)
 
         assert_sp(sp, schema, handlers=handlers)
+
+    def test_resolved_cache_maxsize(self):
+        sp = SchemaPath.from_dict(
+            {"name": "test"},
+            resolved_cache_maxsize=3,
+        )
+
+        assert isinstance(sp.accessor, SchemaAccessor)
+        assert sp.accessor._resolved_cache_maxsize == 3
 
     def test_spec_url(self, assert_sp):
         schema = mock.sentinel.schema
@@ -100,6 +110,20 @@ class TestSchemaPathFromFile:
 
         assert_sp(sp, schema, base_uri=spec_url)
 
+    def test_resolved_cache_maxsize(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+        schema_file_path = Path(schema_file_path_str)
+        schema_file_obj = schema_file_path.open()
+
+        sp = SchemaPath.from_file(
+            schema_file_obj,  # type: ignore[arg-type]
+            resolved_cache_maxsize=3,
+        )
+
+        assert isinstance(sp.accessor, SchemaAccessor)
+        assert sp.accessor._resolved_cache_maxsize == 3
+
 
 class TestSchemaPathFromPath:
     def test_file_no_exist(self, create_file):
@@ -119,6 +143,19 @@ class TestSchemaPathFromPath:
 
         assert_sp(sp, schema, base_uri=schema_file_uri)
 
+    def test_resolved_cache_maxsize(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+        schema_file_path = Path(schema_file_path_str)
+
+        sp = SchemaPath.from_path(
+            schema_file_path,
+            resolved_cache_maxsize=3,
+        )
+
+        assert isinstance(sp.accessor, SchemaAccessor)
+        assert sp.accessor._resolved_cache_maxsize == 3
+
 
 class TestSchemaPathFromFilePath:
     def test_no_kwargs(self, create_file, assert_sp):
@@ -129,6 +166,18 @@ class TestSchemaPathFromFilePath:
         sp = SchemaPath.from_file_path(schema_file_path_str)
 
         assert_sp(sp, schema, base_uri=schema_file_uri)
+
+    def test_resolved_cache_maxsize(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+
+        sp = SchemaPath.from_file_path(
+            schema_file_path_str,
+            resolved_cache_maxsize=3,
+        )
+
+        assert isinstance(sp.accessor, SchemaAccessor)
+        assert sp.accessor._resolved_cache_maxsize == 3
 
 
 class TestSchemaPathGetkey:
