@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import Any
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -75,15 +77,22 @@ class TestSchemaPathFromDict:
 
         assert_sp(sp, schema, handlers=handlers)
 
+    def test_negative_resolved_cache_maxsize_raises(self):
+        with pytest.raises(ValueError):
+            SchemaPath.from_dict(
+                {"type": "integer"},
+                resolved_cache_maxsize=-1,
+            )
+
 
 class TestSchemaPathFromFile:
     def test_no_kwargs(self, create_file, assert_sp):
         schema = {"type": "integer"}
         schema_file_path_str = create_file(schema)
         schema_file_path = Path(schema_file_path_str)
-        schema_file_obj = schema_file_path.open()
+        schema_file_obj = cast(Any, schema_file_path.open())
 
-        sp = SchemaPath.from_file(schema_file_obj)
+        sp = SchemaPath.from_file(schema_file_obj)  # type: ignore[arg-type]
 
         assert_sp(sp, schema)
 
@@ -91,10 +100,13 @@ class TestSchemaPathFromFile:
         schema = {"type": "integer"}
         schema_file_path_str = create_file(schema)
         schema_file_path = Path(schema_file_path_str)
-        schema_file_obj = schema_file_path.open()
+        schema_file_obj = cast(Any, schema_file_path.open())
         base_uri = "mock.sentinel.base_uri"
 
-        sp = SchemaPath.from_file(schema_file_obj, base_uri=base_uri)
+        sp = SchemaPath.from_file(  # type: ignore[arg-type]
+            schema_file_obj,
+            base_uri=base_uri,
+        )
 
         assert_sp(sp, schema, base_uri=base_uri)
 
@@ -102,11 +114,14 @@ class TestSchemaPathFromFile:
         schema = {"type": "integer"}
         schema_file_path_str = create_file(schema)
         schema_file_path = Path(schema_file_path_str)
-        schema_file_obj = schema_file_path.open()
+        schema_file_obj = cast(Any, schema_file_path.open())
         spec_url = "mock.sentinel.spec_url"
 
         with pytest.warns(DeprecationWarning):
-            sp = SchemaPath.from_file(schema_file_obj, spec_url=spec_url)
+            sp = SchemaPath.from_file(  # type: ignore[arg-type]
+                schema_file_obj,
+                spec_url=spec_url,
+            )
 
         assert_sp(sp, schema, base_uri=spec_url)
 
@@ -114,7 +129,7 @@ class TestSchemaPathFromFile:
         schema = {"type": "integer"}
         schema_file_path_str = create_file(schema)
         schema_file_path = Path(schema_file_path_str)
-        schema_file_obj = schema_file_path.open()
+        schema_file_obj = cast(Any, schema_file_path.open())
 
         sp = SchemaPath.from_file(
             schema_file_obj,  # type: ignore[arg-type]
@@ -123,6 +138,18 @@ class TestSchemaPathFromFile:
 
         assert isinstance(sp.accessor, SchemaAccessor)
         assert sp.accessor._resolved_cache_maxsize == 3
+
+    def test_negative_resolved_cache_maxsize_raises(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+        schema_file_path = Path(schema_file_path_str)
+        schema_file_obj = cast(Any, schema_file_path.open())
+
+        with pytest.raises(ValueError):
+            SchemaPath.from_file(
+                schema_file_obj,  # type: ignore[arg-type]
+                resolved_cache_maxsize=-1,
+            )
 
 
 class TestSchemaPathFromPath:
@@ -156,6 +183,17 @@ class TestSchemaPathFromPath:
         assert isinstance(sp.accessor, SchemaAccessor)
         assert sp.accessor._resolved_cache_maxsize == 3
 
+    def test_negative_resolved_cache_maxsize_raises(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+        schema_file_path = Path(schema_file_path_str)
+
+        with pytest.raises(ValueError):
+            SchemaPath.from_path(
+                schema_file_path,
+                resolved_cache_maxsize=-1,
+            )
+
 
 class TestSchemaPathFromFilePath:
     def test_no_kwargs(self, create_file, assert_sp):
@@ -178,6 +216,16 @@ class TestSchemaPathFromFilePath:
 
         assert isinstance(sp.accessor, SchemaAccessor)
         assert sp.accessor._resolved_cache_maxsize == 3
+
+    def test_negative_resolved_cache_maxsize_raises(self, create_file):
+        schema = {"type": "integer"}
+        schema_file_path_str = create_file(schema)
+
+        with pytest.raises(ValueError):
+            SchemaPath.from_file_path(
+                schema_file_path_str,
+                resolved_cache_maxsize=-1,
+            )
 
 
 class TestSchemaPathGetkey:
