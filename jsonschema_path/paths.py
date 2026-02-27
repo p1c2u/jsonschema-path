@@ -105,6 +105,7 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         specification: Specification[Schema] = DRAFT202012,
         base_uri: str = "",
         handlers: ResolverHandlers = default_handlers,
+        resolved_cache_maxsize: int = 0,
         spec_url: str | None = None,
         ref_resolver_handlers: ResolverHandlers | None = None,
     ) -> TSchemaPath:
@@ -127,6 +128,7 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
             specification=specification,
             base_uri=base_uri,
             handlers=handlers,
+            resolved_cache_maxsize=resolved_cache_maxsize,
         )
 
         return cls(accessor, *args, separator=separator)
@@ -135,19 +137,29 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
     def from_path(
         cls: type[TSchemaPath],
         path: Path,
+        resolved_cache_maxsize: int = 0,
     ) -> TSchemaPath:
         reader = PathReader(path)
         data, base_uri = reader.read()
-        return cls.from_dict(data, base_uri=base_uri)
+        return cls.from_dict(
+            data,
+            base_uri=base_uri,
+            resolved_cache_maxsize=resolved_cache_maxsize,
+        )
 
     @classmethod
     def from_file_path(
         cls: type[TSchemaPath],
         file_path: str,
+        resolved_cache_maxsize: int = 0,
     ) -> TSchemaPath:
         reader = FilePathReader(file_path)
         data, base_uri = reader.read()
-        return cls.from_dict(data, base_uri=base_uri)
+        return cls.from_dict(
+            data,
+            base_uri=base_uri,
+            resolved_cache_maxsize=resolved_cache_maxsize,
+        )
 
     @classmethod
     def from_file(
@@ -155,10 +167,16 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         fileobj: SupportsRead,
         base_uri: str = "",
         spec_url: str | None = None,
+        resolved_cache_maxsize: int = 0,
     ) -> TSchemaPath:
         reader = FileReader(fileobj)
         data, _ = reader.read()
-        return cls.from_dict(data, base_uri=base_uri, spec_url=spec_url)
+        return cls.from_dict(
+            data,
+            base_uri=base_uri,
+            spec_url=spec_url,
+            resolved_cache_maxsize=resolved_cache_maxsize,
+        )
 
     def str_keys(self) -> Sequence[str]:
         keys = list(self.keys())

@@ -14,15 +14,19 @@ try:
     # Prefer module execution: `python -m tests.benchmarks.bench_parse ...`
     from .bench_utils import BenchmarkResult
     from .bench_utils import add_common_args
+    from .bench_utils import default_meta
     from .bench_utils import results_to_json
     from .bench_utils import run_benchmark
+    from .bench_utils import safe_nonnegative_int_env
     from .bench_utils import write_json
 except ImportError:  # pragma: no cover
     # Allow direct execution: `python tests/benchmarks/bench_parse.py ...`
     from bench_utils import BenchmarkResult  # type: ignore[no-redef]
     from bench_utils import add_common_args  # type: ignore[no-redef]
+    from bench_utils import default_meta  # type: ignore[no-redef]
     from bench_utils import results_to_json  # type: ignore[no-redef]
     from bench_utils import run_benchmark  # type: ignore[no-redef]
+    from bench_utils import safe_nonnegative_int_env  # type: ignore[no-redef]
     from bench_utils import write_json  # type: ignore[no-redef]
 
 
@@ -47,9 +51,15 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     repeats: int = args.repeats
     warmup_loops: int = args.warmup_loops
+    resolved_cache_maxsize = safe_nonnegative_int_env(
+        "JSONSCHEMA_PATH_BENCH_RESOLVED_CACHE_MAXSIZE"
+    )
 
     # Keep accessor construction out of the hot loop.
-    accessor = SchemaAccessor.from_schema({"type": "object"})
+    accessor = SchemaAccessor.from_schema(
+        {"type": "object"},
+        resolved_cache_maxsize=resolved_cache_maxsize,
+    )
     sep: str = SPEC_SEPARATOR
 
     results: list[BenchmarkResult] = []
@@ -97,7 +107,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             )
         )
 
-    payload = results_to_json(results=results)
+    meta = default_meta()
+    meta["resolved_cache_maxsize"] = resolved_cache_maxsize
+    payload = results_to_json(results=results, meta=meta)
     write_json(args.output, payload)
     return 0
 
