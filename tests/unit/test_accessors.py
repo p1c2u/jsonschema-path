@@ -159,3 +159,32 @@ class TestSchemaAccessorRequireChild:
         with pytest.raises(KeyError):
             accessor.require_child(["one"], "missing")
         retrieve.assert_called_once_with("x://testref")
+
+
+class TestSchemaAccessorResolverEvolution:
+    def test_does_not_evolve_resolver_when_registry_unchanged(self):
+        accessor = SchemaAccessor.from_schema({"a": {"b": 1}})
+        initial_resolver = accessor.resolver
+
+        assert accessor.read(["a", "b"]) == 1
+        assert accessor.resolver is initial_resolver
+
+    def test_evolves_once_when_registry_changes(self):
+        retrieve = Mock(return_value={"value": "tested"})
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {
+                    "$ref": "x://testref",
+                },
+            },
+            handlers={"x": retrieve},
+        )
+        initial_resolver = accessor.resolver
+
+        assert accessor.read(["one", "value"]) == "tested"
+        evolved_resolver = accessor.resolver
+        assert evolved_resolver is not initial_resolver
+
+        assert accessor.read(["one", "value"]) == "tested"
+        assert accessor.resolver is evolved_resolver
+        retrieve.assert_called_once_with("x://testref")
