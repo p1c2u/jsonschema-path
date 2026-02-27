@@ -248,3 +248,38 @@ class TestSchemaAccessorResolvedCache:
         assert second_one is not first_one
 
         assert retrieve.call_count == 2
+
+
+class TestSchemaAccessorResolveNode:
+    def test_deep_local_ref_chain_resolves(self):
+        depth = 1200
+        defs = {}
+
+        for i in range(depth):
+            if i == depth - 1:
+                defs[f"N{i}"] = {"value": "ok"}
+            else:
+                defs[f"N{i}"] = {"$ref": f"#/$defs/N{i + 1}"}
+
+        accessor = SchemaAccessor.from_schema(
+            {
+                "$defs": defs,
+                "root": {"$ref": "#/$defs/N0"},
+            }
+        )
+
+        assert accessor.read(["root", "value"]) == "ok"
+
+    def test_cyclic_local_ref_chain_raises_value_error(self):
+        accessor = SchemaAccessor.from_schema(
+            {
+                "$defs": {
+                    "A": {"$ref": "#/$defs/B"},
+                    "B": {"$ref": "#/$defs/A"},
+                },
+                "root": {"$ref": "#/$defs/A"},
+            }
+        )
+
+        with pytest.raises(ValueError, match=r"Cyclic \$ref detected"):
+            accessor.read(["root"])

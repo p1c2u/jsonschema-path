@@ -233,12 +233,39 @@ class SchemaAccessor(LookupAccessor):
         node: LookupNode,
         resolver: Resolver[Schema],
     ) -> Resolved[Schema]:
-        if is_ref(node):
-            ref_node = cls._get_subnode(node, "$ref")
+        if not is_ref(node):
+            return Resolved(cast(Schema, node), resolver)  # type: ignore
+
+        current_node = node
+        current_resolver = resolver
+        first_state: tuple[Hashable, Hashable, int] | None = None
+        visited: set[tuple[Hashable, Hashable, int]] | None = None
+
+        while True:
+            ref_node = cls._get_subnode(current_node, "$ref")
             ref = cls._read_node(ref_node)
-            resolved = resolver.lookup(ref)
-            return cls._resolve_node(
+
+            state = (
+                cast(Hashable, ref),
+                cast(Hashable, current_resolver._base_uri),
+                id(current_resolver._registry),
+            )
+            if first_state is None:
+                first_state = state
+            elif state == first_state:
+                raise ValueError(f"Cyclic $ref detected for {ref!r}")
+            else:
+                if visited is None:
+                    visited = {first_state}
+                if state in visited:
+                    raise ValueError(f"Cyclic $ref detected for {ref!r}")
+                visited.add(state)
+
+            resolved = current_resolver.lookup(ref)
+            current_node, current_resolver = (
                 resolved.contents,
                 resolved.resolver,
             )
-        return Resolved(cast(Schema, node), resolver)  # type: ignore
+
+            if not is_ref(current_node):
+                return Resolved(cast(Schema, current_node), current_resolver)  # type: ignore
