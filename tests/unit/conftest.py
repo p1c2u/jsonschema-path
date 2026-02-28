@@ -19,7 +19,7 @@ def assert_ra():
         specification=DRAFT202012,
     ):
         assert sa.content == schema
-        resolver = sa.resolver
+        resolver = sa._path_resolver.resolver
         assert type(resolver) is Resolver
         assert resolver._base_uri == base_uri
         registry = resolver._registry
@@ -42,7 +42,7 @@ def assert_sa():
     ):
         assert type(sa) is SchemaAccessor
         assert sa.node == schema
-        resolver = sa.resolver
+        resolver = sa._path_resolver.resolver
         assert type(resolver) is Resolver
         assert resolver._base_uri == base_uri
         registry = resolver._registry
