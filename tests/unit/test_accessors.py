@@ -1,8 +1,10 @@
 from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 
 from jsonschema_path.accessors import SchemaAccessor
+from jsonschema_path.nodes import SchemaNode
 
 
 class TestSchemaAccessorOpen:
@@ -163,11 +165,16 @@ class TestSchemaAccessorRequireChild:
 
 class TestSchemaAccessorResolverEvolution:
     def test_does_not_evolve_resolver_when_registry_unchanged(self):
-        accessor = SchemaAccessor.from_schema({"a": {"b": 1}})
-        initial_resolver = accessor.resolver
+        accessor = SchemaAccessor.from_schema(
+            {"a": {"b": 1}},
+        )
+        initial_resolver = accessor._path_resolver.resolver
 
         assert accessor.read(["a", "b"]) == 1
-        assert accessor.resolver is initial_resolver
+        assert accessor._path_resolver.resolver is initial_resolver
+
+        assert accessor.read(["a", "b"]) == 1
+        assert accessor._path_resolver.resolver is initial_resolver
 
     def test_evolves_once_when_registry_changes(self):
         retrieve = Mock(return_value={"value": "tested"})
@@ -179,14 +186,14 @@ class TestSchemaAccessorResolverEvolution:
             },
             handlers={"x": retrieve},
         )
-        initial_resolver = accessor.resolver
+        initial_resolver = accessor._path_resolver.resolver
 
         assert accessor.read(["one", "value"]) == "tested"
-        evolved_resolver = accessor.resolver
+        evolved_resolver = accessor._path_resolver.resolver
         assert evolved_resolver is not initial_resolver
 
         assert accessor.read(["one", "value"]) == "tested"
-        assert accessor.resolver is evolved_resolver
+        assert accessor._path_resolver.resolver is evolved_resolver
         retrieve.assert_called_once_with("x://testref")
 
 
@@ -248,3 +255,64 @@ class TestSchemaAccessorResolvedCache:
         assert second_one is not first_one
 
         assert retrieve.call_count == 2
+
+
+class TestSchemaAccessorPrefixCache:
+    def test_reuses_longest_resolved_prefix_for_siblings(self):
+        accessor = SchemaAccessor.from_schema(
+            {
+                "components": {
+                    "schemas": {
+                        "A": {"type": "string"},
+                        "B": {"type": "integer"},
+                    }
+                }
+            }
+        )
+
+        with patch.object(
+            SchemaNode,
+            "_resolve_node",
+            wraps=SchemaNode._resolve_node,
+        ) as resolve_node:
+            accessor.get_resolved(["components", "schemas", "A"])
+            first_call_count = resolve_node.call_count
+
+            accessor.get_resolved(["components", "schemas", "B"])
+            second_call_increment = resolve_node.call_count - first_call_count
+
+        assert first_call_count == 4
+        assert second_call_increment == 1
+
+    def test_keeps_disabled_full_path_identity_behavior(self):
+        accessor = SchemaAccessor.from_schema(
+            {
+                "components": {
+                    "schemas": {
+                        "A": {"type": "string"},
+                    }
+                }
+            }
+        )
+
+        first = accessor.get_resolved(["components", "schemas", "A"])
+        second = accessor.get_resolved(["components", "schemas", "A"])
+
+        assert first is not second
+
+    def test_prefix_cache_is_cleared_when_registry_evolves(self):
+        retrieve = Mock(return_value={"value": "tested"})
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {
+                    "$ref": "x://testref",
+                },
+            },
+            handlers={"x": retrieve},
+        )
+        prefix_cache = accessor._path_resolver.prefix_cache
+
+        _ = accessor.get_resolved(["one", "value"])
+
+        assert accessor._path_resolver.prefix_cache is prefix_cache
+        assert accessor._path_resolver.prefix_cache._cache == {}

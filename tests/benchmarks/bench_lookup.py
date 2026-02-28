@@ -55,6 +55,17 @@ def _build_mapping(size: int) -> dict[str, int]:
     return {f"k{i}": i for i in range(size)}
 
 
+def _schema_with_sibling_prefix(depth: int, width: int) -> dict[str, Any]:
+    schemas: dict[str, Any] = {}
+    for i in range(width):
+        schemas[f"N{i}"] = {"value": i}
+
+    node: dict[str, Any] = {"schemas": schemas}
+    for i in range(depth - 1, -1, -1):
+        node = {f"k{i}": node}
+    return node
+
+
 def _schema_with_local_ref(depth: int) -> dict[str, Any]:
     # Root contains an object whose value is a $ref to local $defs.
     target = _build_deep_tree(depth)
@@ -140,6 +151,40 @@ def main(argv: Iterable[str] | None = None) -> int:
             f"schema.open.cache_hit.local_ref.depth{depth}",
             open_ref_deep,
             loops=loops_read,
+            repeats=repeats,
+            warmup_loops=warmup_loops,
+        )
+    )
+
+    # --- Sibling paths sharing long prefix ---
+    sibling_depth = 10 if not args.quick else 5
+    sibling_width = 64 if not args.quick else 16
+    sibling_loops = 5_000 if not args.quick else 800
+
+    sibling_schema = _schema_with_sibling_prefix(sibling_depth, sibling_width)
+    sibling_root = SchemaPath.from_dict(
+        sibling_schema,
+        resolved_cache_maxsize=resolved_cache_maxsize,
+    )
+    sibling_prefix = _make_deep_path(sibling_root, sibling_depth) / "schemas"
+    sibling_paths = tuple(
+        sibling_prefix / f"N{i}" / "value" for i in range(sibling_width)
+    )
+
+    def read_sibling_batch(
+        _paths: tuple[SchemaPath, ...] = sibling_paths,
+    ) -> None:
+        for _p in _paths:
+            _ = _p.read_value()
+
+    results.append(
+        run_benchmark(
+            (
+                "schema.read_value.sibling_prefix"
+                f".depth{sibling_depth}.width{sibling_width}"
+            ),
+            read_sibling_batch,
+            loops=sibling_loops,
             repeats=repeats,
             warmup_loops=warmup_loops,
         )

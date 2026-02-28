@@ -1,6 +1,5 @@
 """JSONSchema spec accessors module."""
 
-from collections import OrderedDict
 from collections.abc import Hashable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -18,16 +17,15 @@ from referencing._core import Resolved
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
+from jsonschema_path.caches import FullPathResolvedCache
 from jsonschema_path.handlers import default_handlers
+from jsonschema_path.resolvers import CachedPathResolver
 from jsonschema_path.retrievers import SchemaRetriever
 from jsonschema_path.typing import ResolverHandlers
 from jsonschema_path.typing import Schema
-from jsonschema_path.utils import is_ref
 
 
 class SchemaAccessor(LookupAccessor):
-    _resolver_refs: dict[int, Resolver[Schema] | None] = {}
-
     def __init__(
         self,
         schema: Schema,
@@ -38,15 +36,13 @@ class SchemaAccessor(LookupAccessor):
             raise ValueError("resolved_cache_maxsize must be >= 0")
 
         super().__init__(cast(LookupNode, schema))
-        self.resolver = resolver
+        self._path_resolver: CachedPathResolver = CachedPathResolver(
+            resolver,
+        )
         self._resolved_cache_maxsize = resolved_cache_maxsize
-        self._resolved_cache: OrderedDict[
-            tuple[tuple[LookupKey, ...], int],
-            Resolved[LookupNode],
-        ] = OrderedDict()
-        self._resolver_version = 0
-
-        self._resolver_refs[id(schema)] = resolver
+        self._resolved_cache: FullPathResolvedCache = FullPathResolvedCache(
+            maxsize=resolved_cache_maxsize
+        )
 
     @classmethod
     def from_schema(
@@ -163,82 +159,14 @@ class SchemaAccessor(LookupAccessor):
             pass
 
     def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
-        cache_key = self._resolved_cache_key(parts)
-        if cache_key is not None:
-            cached_resolved = self._resolved_cache.get(cache_key)
-            if cached_resolved is not None:
-                self._resolved_cache.move_to_end(cache_key)
-                return cached_resolved
+        cached_resolved = self._resolved_cache.get(parts)
+        if cached_resolved is not None:
+            return cached_resolved
 
-        resolved = self._get_resolved(self.node, parts, resolver=self.resolver)
-        if resolved.resolver._registry is not self.resolver._registry:
-            self.resolver = self.resolver._evolve(
-                self.resolver._base_uri,
-                registry=resolved.resolver._registry,
-            )
-            self._resolver_version += 1
-            self._resolved_cache.clear()
+        result = self._path_resolver.resolve(self.node, parts)
+        if result.registry_changed:
+            self._resolved_cache.invalidate()
 
-        cache_key = self._resolved_cache_key(parts)
-        if cache_key is not None:
-            self._resolved_cache[cache_key] = resolved
-            self._resolved_cache.move_to_end(cache_key)
-            if len(self._resolved_cache) > self._resolved_cache_maxsize:
-                self._resolved_cache.popitem(last=False)
+        self._resolved_cache.set(parts, result.resolved)
 
-        return resolved
-
-    def _resolved_cache_key(
-        self,
-        parts: Sequence[LookupKey],
-    ) -> tuple[tuple[LookupKey, ...], int] | None:
-        if self._resolved_cache_maxsize <= 0:
-            return None
-
-        parts_tuple = tuple(parts)
-        try:
-            hash(parts_tuple)
-        except TypeError:
-            return None
-
-        return (parts_tuple, self._resolver_version)
-
-    @classmethod
-    def _get_resolved(
-        cls,
-        node: LookupNode,
-        parts: Sequence[LookupKey],
-        resolver: Resolver[Schema] | None = None,
-    ) -> Resolved[LookupNode]:
-        if resolver is None:
-            raise ValueError("resolver must be provided")
-
-        current_node: LookupNode = node
-        current_resolver: Resolver[Schema] = resolver
-
-        for part in parts:
-            resolved = cls._resolve_node(current_node, current_resolver)
-            current_node, current_resolver = (
-                resolved.contents,
-                resolved.resolver,
-            )
-            current_node = cls._get_subnode(current_node, part)
-
-        resolved = cls._resolve_node(current_node, current_resolver)
-        return cast(Resolved[LookupNode], resolved)
-
-    @classmethod
-    def _resolve_node(
-        cls,
-        node: LookupNode,
-        resolver: Resolver[Schema],
-    ) -> Resolved[Schema]:
-        if is_ref(node):
-            ref_node = cls._get_subnode(node, "$ref")
-            ref = cls._read_node(ref_node)
-            resolved = resolver.lookup(ref)
-            return cls._resolve_node(
-                resolved.contents,
-                resolved.resolver,
-            )
-        return Resolved(cast(Schema, node), resolver)  # type: ignore
+        return result.resolved
