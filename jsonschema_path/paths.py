@@ -178,6 +178,11 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
             resolved_cache_maxsize=resolved_cache_maxsize,
         )
 
+    @property
+    def base_uri(self) -> str:
+        assert isinstance(self.accessor, SchemaAccessor)
+        return self.accessor.base_uri
+
     def str_keys(self) -> Sequence[str]:
         keys = list(self.keys())
         if not is_str_sequence(keys):

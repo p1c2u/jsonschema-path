@@ -333,6 +333,19 @@ class TestSchemaPathReadStrOrList:
 
 
 class TestSchemaPathHelpers:
+    def test_base_uri(self):
+        base_uri = "https://example.com/openapi.json"
+        sp = SchemaPath.from_dict({"a": {"b": 1}}, base_uri=base_uri)
+
+        assert sp.base_uri == base_uri
+
+    def test_base_uri_for_child_path(self):
+        base_uri = "https://example.com/openapi.json"
+        sp = SchemaPath.from_dict({"a": {"b": 1}}, base_uri=base_uri)
+        child = sp / "a" / "b"
+
+        assert child.base_uri == base_uri
+
     def test_as_uri(self):
         sp = SchemaPath.from_dict({"a": {"b": 1}}) // "a" // "b"
 

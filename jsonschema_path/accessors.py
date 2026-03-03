@@ -1,5 +1,6 @@
 """JSONSchema spec accessors module."""
 
+import warnings
 from collections.abc import Hashable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -67,6 +68,20 @@ class SchemaAccessor(LookupAccessor):
             resolver,
             resolved_cache_maxsize=resolved_cache_maxsize,
         )
+
+    @property
+    def base_uri(self) -> str:
+        return self._path_resolver.resolver._base_uri
+
+    @property
+    def resolver(self) -> Resolver[Schema]:
+        warnings.warn(
+            "SchemaAccessor.resolver is deprecated. "
+            "Use SchemaPath.base_uri to access the base URI and "
+            "SchemaPath.resolve() to resolve paths.",
+            DeprecationWarning,
+        )
+        return self._path_resolver.resolver
 
     def __getitem__(self, parts: Sequence[LookupKey]) -> LookupNode:
         resolved = self.get_resolved(parts)
