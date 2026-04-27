@@ -1,4 +1,6 @@
+from io import StringIO
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import cast
 from unittest import mock
@@ -151,6 +153,20 @@ class TestSchemaPathFromFile:
                 resolved_cache_maxsize=-1,
             )
 
+    @pytest.mark.parametrize(
+        ("yaml_data", "expected"),
+        [
+            ("maximum: 1e2", 100.0),
+            ("maximum: .1e2", 10.0),
+            ("maximum: 1.e2", 100.0),
+        ],
+    )
+    def test_parses_scientific_notation_as_float(self, yaml_data, expected):
+        sp = SchemaPath.from_file(StringIO(yaml_data))
+
+        assert (sp // "maximum").read_value() == expected
+        assert type((sp // "maximum").read_value()) is float
+
 
 class TestSchemaPathFromPath:
     def test_file_no_exist(self, create_file):
@@ -226,6 +242,19 @@ class TestSchemaPathFromFilePath:
                 schema_file_path_str,
                 resolved_cache_maxsize=-1,
             )
+
+    def test_parses_scientific_notation_as_float(self):
+        with NamedTemporaryFile("w", suffix=".yaml", delete=False) as tf:
+            tf.write("maximum: 1e2")
+            schema_file_path_str = tf.name
+
+        try:
+            sp = SchemaPath.from_file_path(schema_file_path_str)
+
+            assert (sp // "maximum").read_value() == 100.0
+            assert type((sp // "maximum").read_value()) is float
+        finally:
+            Path(schema_file_path_str).unlink()
 
 
 class TestSchemaPathGetkey:
