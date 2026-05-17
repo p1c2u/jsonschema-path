@@ -1,4 +1,15 @@
-"""JSONSchema path caches module."""
+"""JSONSchema path caches module.
+
+Both caches store ``Resolved`` values keyed on hashable schema paths.
+Staleness across ``referencing.Registry`` growth is *not* handled by
+invalidation here; the callers rebind cached ``Resolved`` values to the
+current registry on read (see
+``jsonschema_path._referencing_compat.rebind_registry``). This relies on
+the assumption that registries grow monotonically — resources are added,
+never replaced. Handlers that return drifting content for the same URI
+violate that assumption; users who need to defend against that should
+disable caching with ``resolved_cache_maxsize=0``.
+"""
 
 from collections import OrderedDict
 from collections.abc import Sequence
@@ -11,16 +22,15 @@ from referencing._core import Resolved
 class FullPathResolvedCache:
     def __init__(self, maxsize: int):
         self._maxsize = maxsize
-        self._generation = 0
         self._cache: OrderedDict[
-            tuple[tuple[LookupKey, ...], int],
+            tuple[LookupKey, ...],
             Resolved[LookupNode],
         ] = OrderedDict()
 
     def _make_key(
         self,
         parts: Sequence[LookupKey],
-    ) -> tuple[tuple[LookupKey, ...], int] | None:
+    ) -> tuple[LookupKey, ...] | None:
         if self._maxsize <= 0:
             return None
 
@@ -30,7 +40,7 @@ class FullPathResolvedCache:
         except TypeError:
             return None
 
-        return (parts_tuple, self._generation)
+        return parts_tuple
 
     def get(
         self,
@@ -61,10 +71,6 @@ class FullPathResolvedCache:
         if len(self._cache) > self._maxsize:
             self._cache.popitem(last=False)
 
-    def invalidate(self) -> None:
-        self._generation += 1
-        self._cache.clear()
-
 
 class PrefixResolvedCache:
     def __init__(self) -> None:
@@ -89,6 +95,19 @@ class PrefixResolvedCache:
 
         return None
 
+    def replace(
+        self,
+        parts: tuple[LookupKey, ...],
+        index: int,
+        resolved: Resolved[LookupNode],
+    ) -> None:
+        """Overwrite an existing prefix entry (used after a rebind)."""
+        prefix = parts[:index]
+        try:
+            self._cache[prefix] = resolved
+        except TypeError:
+            pass
+
     def store_intermediate(
         self,
         parts: tuple[LookupKey, ...],
@@ -103,6 +122,3 @@ class PrefixResolvedCache:
             self._cache[prefix] = resolved
         except TypeError:
             pass
-
-    def invalidate(self) -> None:
-        self._cache.clear()

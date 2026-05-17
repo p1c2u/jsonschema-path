@@ -94,8 +94,13 @@ Resolved cache
 ##############
 
 The resolved-path cache is intended for repeated path lookups and may significantly improve
-``read_value``/membership hot paths. Cache entries are invalidated when the
-resolver registry evolves during reference resolution.
+``read_value``/membership hot paths. When the underlying ``referencing``
+registry grows (e.g. an external ``$ref`` pulls in a new document),
+cached entries are *rebound* to the new registry on read instead of
+being discarded. This relies on registries growing monotonically —
+resources are added, never replaced. Handlers that return drifting
+content for the same URI violate that assumption; disable caching with
+``resolved_cache_maxsize=0`` if you need to defend against it.
 
 This cache is enabled by default
 (``resolved_cache_maxsize=128``). You can disable it when creating paths or

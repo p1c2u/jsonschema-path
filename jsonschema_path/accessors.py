@@ -18,6 +18,7 @@ from referencing._core import Resolved
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
+from jsonschema_path._referencing_compat import rebind_resolved
 from jsonschema_path.caches import FullPathResolvedCache
 from jsonschema_path.handlers import default_handlers
 from jsonschema_path.resolvers import CachedPathResolver
@@ -176,12 +177,25 @@ class SchemaAccessor(LookupAccessor):
     def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
         cached_resolved = self._resolved_cache.get(parts)
         if cached_resolved is not None:
-            return cached_resolved
+            # Read `_registry` directly: it is a stable attrs-backed
+            # attribute on every supported referencing version (the
+            # import-time `assert_referencing_layout` guarantees this)
+            # and a plain attribute access is ~30ns vs ~100ns through a
+            # helper with isinstance dispatch. The cold-path field
+            # *write* still goes through `rebind_resolved`.
+            current_registry = self._path_resolver.resolver._registry
+            if cached_resolved.resolver._registry is current_registry:
+                return cached_resolved
+            # Rebind to the current registry rather than discard. Safe
+            # under monotonic registry growth (see caches.py docstring).
+            rebound = cast(
+                Resolved[LookupNode],
+                rebind_resolved(cached_resolved, current_registry),
+            )
+            self._resolved_cache.set(parts, rebound)
+            return rebound
 
         result = self._path_resolver.resolve(self.node, parts)
-        if result.registry_changed:
-            self._resolved_cache.invalidate()
-
         self._resolved_cache.set(parts, result.resolved)
 
         return result.resolved

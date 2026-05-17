@@ -8,6 +8,8 @@ from referencing import Registry
 from referencing._core import Resolved
 from referencing._core import Resolver
 
+from jsonschema_path._referencing_compat import rebind_registry
+from jsonschema_path._referencing_compat import rebind_resolved
 from jsonschema_path.caches import PrefixResolvedCache
 from jsonschema_path.nodes import SchemaNode
 from jsonschema_path.typing import Schema
@@ -55,7 +57,20 @@ class CachedPathResolver:
             start = 0
             self.prefix_cache.seed_root(resolved)
         else:
-            start, resolved = cached_prefix
+            start, cached_resolved = cached_prefix
+            # Rebind to the current registry if it grew since this prefix
+            # was cached, then refresh the stored entry so subsequent hits
+            # skip the check. Reads of `_registry` go direct (cheap, plain
+            # attribute access on an attrs class); the cold-path write
+            # still goes through `rebind_resolved`.
+            current_registry = self.resolver._registry
+            if cached_resolved.resolver._registry is not current_registry:
+                cached_resolved = cast(
+                    Resolved[LookupNode],
+                    rebind_resolved(cached_resolved, current_registry),
+                )
+                self.prefix_cache.replace(parts_tuple, start, cached_resolved)
+            resolved = cached_resolved
             current_node = resolved.contents
             current_resolver = cast(Resolver[Schema], resolved.resolver)
 
@@ -83,9 +98,10 @@ class CachedPathResolver:
         if registry is self.resolver._registry:
             return False
 
-        self.resolver = self.resolver._evolve(
-            self.resolver._base_uri,
-            registry=registry,
+        # Rebind self.resolver so subsequent fresh resolutions start from
+        # the latest registry. The prefix cache is *not* invalidated; its
+        # entries are rebound on read in _resolve_with_prefix_cache above.
+        self.resolver = cast(
+            Resolver[Schema], rebind_registry(self.resolver, registry)
         )
-        self.prefix_cache.invalidate()
         return True
