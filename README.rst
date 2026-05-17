@@ -97,13 +97,35 @@ The resolved-path cache is intended for repeated path lookups and may significan
 ``read_value``/membership hot paths. Cache entries are invalidated when the
 resolver registry evolves during reference resolution.
 
-This cache is optional and disabled by default
-(``resolved_cache_maxsize=0``). You can enable it when creating paths or
+This cache is enabled by default
+(``resolved_cache_maxsize=128``). You can disable it when creating paths or
 accessors, for example:
 
 .. code-block:: python
 
-   >>> path = SchemaPath.from_dict(d, resolved_cache_maxsize=64)
+   >>> path = SchemaPath.from_dict(d, resolved_cache_maxsize=0)
+
+Build **one** :code:`SchemaAccessor` per schema document and reuse it for
+every :code:`SchemaPath` you derive from that document. Treat the accessor
+as the long-lived handle to the resource; treat paths as cheap views over
+it.
+
+.. code-block:: python
+
+   >>> from jsonschema_path import SchemaPath
+   >>> from jsonschema_path.accessors import SchemaAccessor
+
+   >>> # Construct the accessor once, with caching enabled.
+   >>> accessor = SchemaAccessor.from_schema(d, resolved_cache_maxsize=128)
+
+   >>> # Derive as many paths as you like from the same accessor.
+   >>> root = SchemaPath(accessor)
+   >>> info = root / "properties" / "info"
+   >>> version = info / "properties" / "version"
+
+   >>> # Every path over `accessor` shares the same resolved-ref cache.
+   >>> with version.open() as contents:
+   ...     ...
 
 Benchmarks
 ##########
