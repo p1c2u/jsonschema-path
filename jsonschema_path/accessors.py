@@ -31,7 +31,7 @@ class SchemaAccessor(LookupAccessor):
         self,
         schema: Schema,
         resolver: Resolver[Schema],
-        resolved_cache_maxsize: int = 0,
+        resolved_cache_maxsize: int = 128,
     ):
         if resolved_cache_maxsize < 0:
             raise ValueError("resolved_cache_maxsize must be >= 0")

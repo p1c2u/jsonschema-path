@@ -7,7 +7,6 @@ import warnings
 from collections.abc import Iterator
 from collections.abc import Sequence
 from contextlib import contextmanager
-from functools import cached_property
 from pathlib import Path
 from typing import Any
 from typing import TypeVar
@@ -260,18 +259,12 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
     @contextmanager
     def open(self) -> Any:
         """Open the path."""
-        # Cached path content
         with self.resolve() as resolved:
             yield resolved.contents
 
     @contextmanager
     def resolve(self) -> Iterator[Resolved[SchemaNode]]:
         """Resolve the path."""
-        # Cached path content
-        yield self._get_resolved
-
-    @cached_property
-    def _get_resolved(self) -> Resolved[SchemaNode]:
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
-            return resolved
+            yield resolved
