@@ -41,6 +41,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
+attrs = ">=22.2.0"
 pathable = "^0.5.0"
 python = ">=3.10,<4.0.0"
 PyYAML = ">=5.1"

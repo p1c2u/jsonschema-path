@@ -229,7 +229,7 @@ class TestSchemaAccessorResolvedCache:
 
         assert first_a is not second_a
 
-    def test_registry_evolution_invalidates_previous_generation(self):
+    def test_registry_evolution_rebinds_cached_resolved(self):
         retrieve = Mock(side_effect=[{"value": 1}, {"value": 2}])
         accessor = SchemaAccessor.from_schema(
             {
@@ -246,15 +246,47 @@ class TestSchemaAccessorResolvedCache:
 
         first_one = accessor.get_resolved(["one", "value"])
         assert first_one.contents == 1
+        registry_after_first = accessor._path_resolver.resolver._registry
+        assert first_one.resolver._registry is registry_after_first
 
         second_two = accessor.get_resolved(["two", "value"])
         assert second_two.contents == 2
+        registry_after_two = accessor._path_resolver.resolver._registry
+        assert registry_after_two is not registry_after_first
 
+        # Cache hit rebinds to the current registry instead of
+        # re-resolving from scratch: same underlying contents object,
+        # new Resolved wrapper carrying the up-to-date registry.
         second_one = accessor.get_resolved(["one", "value"])
         assert second_one.contents == 1
+        assert second_one.contents is first_one.contents
+        assert second_one.resolver._registry is registry_after_two
         assert second_one is not first_one
 
+        # No re-retrieval — each $ref target is loaded exactly once.
         assert retrieve.call_count == 2
+
+    def test_rebound_cache_hit_preserves_base_uri_and_previous(self):
+        retrieve = Mock(side_effect=[{"value": 1}, {"value": 2}])
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {"$ref": "x://one"},
+                "two": {"$ref": "x://two"},
+            },
+            handlers={"x": retrieve},
+            resolved_cache_maxsize=8,
+        )
+
+        first_one = accessor.get_resolved(["one", "value"])
+        _ = accessor.get_resolved(["two", "value"])
+        rebound = accessor.get_resolved(["one", "value"])
+
+        # Rebind is a pure registry field swap. base_uri and the
+        # dynamic-scope `_previous` chain must survive intact, otherwise
+        # subsequent $ref resolution under the rebound Resolved would
+        # use the wrong scope.
+        assert rebound.resolver._base_uri == first_one.resolver._base_uri
+        assert rebound.resolver._previous == first_one.resolver._previous
 
 
 class TestSchemaAccessorPrefixCache:
@@ -300,7 +332,7 @@ class TestSchemaAccessorPrefixCache:
 
         assert first is not second
 
-    def test_prefix_cache_is_cleared_when_registry_evolves(self):
+    def test_prefix_cache_is_preserved_when_registry_evolves(self):
         retrieve = Mock(return_value={"value": "tested"})
         accessor = SchemaAccessor.from_schema(
             {
@@ -314,5 +346,44 @@ class TestSchemaAccessorPrefixCache:
 
         _ = accessor.get_resolved(["one", "value"])
 
+        # Prefix cache used to be wiped on registry growth. With the
+        # rebind-on-read strategy it retains its intermediate entry.
         assert accessor._path_resolver.prefix_cache is prefix_cache
-        assert accessor._path_resolver.prefix_cache._cache == {}
+        assert ("one",) in prefix_cache._cache
+
+    def test_prefix_cache_rebound_avoids_redundant_retrieval(self):
+        payloads = {
+            "x://one": {
+                "fast": "shallow",
+                "deep": {"$ref": "x://later"},
+            },
+            "x://primer": {"primed": {"$ref": "x://later"}},
+            "x://later": {"value": "found"},
+        }
+        retrieve = Mock(side_effect=lambda uri: payloads[uri])
+        accessor = SchemaAccessor.from_schema(
+            {
+                "one": {"$ref": "x://one"},
+                "primer": {"$ref": "x://primer"},
+            },
+            handlers={"x": retrieve},
+        )
+
+        # Populate the prefix cache for ("one",) under a registry that
+        # only knows x://one. Walking through "fast" avoids loading
+        # x://later at this point.
+        assert accessor.read(["one", "fast"]) == "shallow"
+
+        # Grow the registry through a different branch, loading
+        # x://primer and x://later.
+        assert accessor.read(["primer", "primed", "value"]) == "found"
+
+        # Re-enter through the cached ("one",) prefix and follow a
+        # $ref into x://later. Without rebind this would either fail
+        # (resource unknown to the stale registry) or trigger a
+        # second retrieve. With rebind it should reuse the already
+        # loaded x://later resource.
+        assert accessor.read(["one", "deep", "value"]) == "found"
+
+        calls = sorted(c.args[0] for c in retrieve.call_args_list)
+        assert calls == ["x://later", "x://one", "x://primer"]
