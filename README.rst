@@ -89,6 +89,37 @@ Usage
    ...     print(contents)
    {'type': 'string', 'default': '1.0'}
 
+Identity and equality
+#####################
+
+Two ``SchemaPath`` instances are equal if they have the same ``parts``
+*and* point to the same ``SchemaAccessor``. ``SchemaAccessor`` identity
+is per-resource-handle: same wrapped dict (by reference), same
+``base_uri``, and same internal resolver instance. In practice:
+
+* Paths derived from the *same* accessor compare equal as expected:
+
+  .. code-block:: python
+
+     >>> accessor = SchemaAccessor.from_schema(d)
+     >>> SchemaPath(accessor) / "properties" == SchemaPath(accessor) / "properties"
+     True
+
+* Paths from *separate* ``from_dict`` or ``from_schema`` calls do **not**
+  compare equal even with identical arguments, because each call builds
+  its own accessor:
+
+  .. code-block:: python
+
+     >>> SchemaPath.from_dict(d) == SchemaPath.from_dict(d)
+     False
+
+* ``SchemaAccessor`` is hashable, so accessors and paths can be used as
+  set members and dict keys.
+
+This is also why the "build one accessor, reuse it" pattern below
+matters: it is both a caching optimisation and the contract you need
+for path equality to behave the way you expect.
 
 Resolved cache
 ##############
@@ -117,8 +148,7 @@ it.
 
 .. code-block:: python
 
-   >>> from jsonschema_path import SchemaPath
-   >>> from jsonschema_path.accessors import SchemaAccessor
+   >>> from jsonschema_path import SchemaAccessor, SchemaPath
 
    >>> # Construct the accessor once, with caching enabled.
    >>> accessor = SchemaAccessor.from_schema(d, resolved_cache_maxsize=128)
