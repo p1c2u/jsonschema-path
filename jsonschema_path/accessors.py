@@ -28,6 +28,22 @@ from jsonschema_path.typing import Schema
 
 
 class SchemaAccessor(LookupAccessor):
+    """Resource handle binding a schema document to its resolver.
+
+    Identity contract: a `SchemaAccessor` is its own identity token,
+    discriminated by the wrapped node (by reference) and the
+    `_path_resolver` instance (by reference). Both are set in
+    `__init__` and never reassigned, so equality and hash are stable
+    for the accessor's lifetime even though the inner registry
+    evolves as `$ref`s are resolved.
+
+    Consequence: two `from_schema(doc, ...)` calls produce non-equal
+    accessors even with identical arguments, because each call builds
+    its own `_path_resolver`. Build one accessor per schema document
+    and reuse it across all derived `SchemaPath`s — see "Identity and
+    equality" and "Recommended usage" in the README.
+    """
+
     def __init__(
         self,
         schema: Schema,
@@ -44,6 +60,31 @@ class SchemaAccessor(LookupAccessor):
         self._resolved_cache_maxsize = resolved_cache_maxsize
         self._resolved_cache: FullPathResolvedCache = FullPathResolvedCache(
             maxsize=resolved_cache_maxsize
+        )
+
+    def __eq__(self, other: object) -> Any:
+        if not isinstance(other, SchemaAccessor):
+            return NotImplemented
+        # See the class docstring for the identity contract. Both
+        # discriminators are reference-stable: `_node` is the
+        # constructor argument and `_path_resolver` is constructed
+        # once in `__init__` and never reassigned (only its inner
+        # `resolver` field is swapped when the registry evolves).
+        return (
+            type(self) is type(other)
+            and self._node is other._node
+            and self._path_resolver is other._path_resolver
+        )
+
+    def __hash__(self) -> int:
+        # Reference-stable inputs only — does not depend on the schema
+        # dict being hashable or on the mutating registry.
+        return hash(
+            (
+                type(self),
+                id(self._node),
+                id(self._path_resolver),
+            )
         )
 
     @classmethod
