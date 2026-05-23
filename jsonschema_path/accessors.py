@@ -1,11 +1,13 @@
 """JSONSchema spec accessors module."""
 
 import warnings
+import weakref
 from collections.abc import Hashable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from contextlib import contextmanager
 from typing import Any
+from typing import ClassVar
 from typing import cast
 
 from pathable.accessors import LookupAccessor
@@ -18,13 +20,18 @@ from referencing._core import Resolved
 from referencing._core import Resolver
 from referencing.jsonschema import DRAFT202012
 
+from jsonschema_path._referencing_compat import base_uri_of
+from jsonschema_path._referencing_compat import raw_lookup
 from jsonschema_path._referencing_compat import rebind_resolved
+from jsonschema_path._referencing_compat import registry_of
+from jsonschema_path._referencing_compat import resolve_ref
 from jsonschema_path.caches import FullPathResolvedCache
 from jsonschema_path.handlers import default_handlers
 from jsonschema_path.resolvers import CachedPathResolver
 from jsonschema_path.retrievers import SchemaRetriever
 from jsonschema_path.typing import ResolverHandlers
 from jsonschema_path.typing import Schema
+from jsonschema_path.utils import is_ref
 
 
 class SchemaAccessor(LookupAccessor):
@@ -43,6 +50,166 @@ class SchemaAccessor(LookupAccessor):
     and reuse it across all derived `SchemaPath`s — see "Identity and
     equality" and "Recommended usage" in the README.
     """
+
+    # Class-level weak-value cache: maps id(root_schema) → SchemaAccessor.
+    # Used by SchemaPath.canonical so that any two canonical computations
+    # that resolve to the same external document share a single accessor
+    # instance (required for `canonical_a.accessor is canonical_b.accessor`
+    # when both point to the same document).  WeakValue semantics mean the
+    # cached accessor is collected as soon as no SchemaPath holds it.
+    #
+    # Why id(root_schema) is the right key:
+    #   ``referencing`` guarantees that ``registry.contents(uri)`` returns
+    #   the *same Python object* for a given URI throughout a single registry
+    #   lineage.  Two independent traversal chains start from separate
+    #   lineages, so without intervention they would produce different Python
+    #   objects for the same file (breaking id-based sharing).
+    #
+    #   ``SchemaPath.canonical`` closes this gap with a registry sync-back:
+    #   after following a cross-document chain it propagates the fully-loaded
+    #   registry back to the originating accessor.  The next traversal from
+    #   that accessor therefore finds the document already present in its
+    #   lineage and ``registry.contents(uri)`` returns the identical object.
+    #
+    #   Compared with URI-only keying, id(root_schema) is stricter: two
+    #   different schema objects at the same URI (only possible if separate
+    #   registries were built from different content) will never share an
+    #   accessor, eliminating the stale-entry risk entirely.
+    #
+    # Safety against id reuse:
+    #   The cache holds the accessor weakly; the accessor in turn holds a
+    #   strong reference to root_schema.  An id can only be recycled after
+    #   both the accessor *and* root_schema have been freed, at which point
+    #   the WeakValue entry has already been removed — so there is no
+    #   collision.
+    _canonical_cache: ClassVar[
+        weakref.WeakValueDictionary[int, "SchemaAccessor"]
+    ] = weakref.WeakValueDictionary()
+
+    @classmethod
+    def _get_or_build_canonical(
+        cls,
+        root_schema: Any,
+        target_base_uri: str,
+        target_registry: Any,
+    ) -> "SchemaAccessor":
+        """Return (or lazily create and cache) a ``SchemaAccessor`` for the
+        external document at *target_base_uri*.
+
+        The cache is class-level (``_canonical_cache``) so that any
+        two ``canonical`` computations pointing at the same document URI share
+        a single accessor instance — necessary for the
+        ``canonical_a.accessor is canonical_b.accessor`` guarantee when both
+        paths resolve to the same external schema.
+
+        Values are held weakly: an accessor is evicted once no
+        ``SchemaPath.canonical`` references it.  See ``_canonical_cache`` for
+        the rationale behind keying on ``id(root_schema)``.
+        """
+        cache_key = id(root_schema)
+        cached = cls._canonical_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        root_resolver = target_registry.resolver(base_uri=target_base_uri)
+        new_accessor = cls(root_schema, root_resolver)
+        cls._canonical_cache[cache_key] = new_accessor
+        return new_accessor
+
+    def _resolve_ref_hop(
+        self,
+        ref: str,
+    ) -> tuple["SchemaAccessor", tuple[LookupKey, ...]]:
+        """Follow a single ``$ref`` hop; return ``(target_accessor, target_parts)``.
+
+        Delegates all URI parsing and fragment resolution to
+        :func:`~jsonschema_path._referencing_compat.resolve_ref` (which
+        applies both referencing workarounds).  This method's sole
+        responsibility is converting the ``LookupResult`` into the
+        ``(SchemaAccessor, parts)`` shape that the ``canonical`` loop needs.
+        """
+        pr = self._path_resolver
+        result = resolve_ref(pr.resolver, ref)
+
+        target_registry = registry_of(result.resolved.resolver)
+        target_base_uri: str = base_uri_of(result.resolved.resolver)
+
+        # Sync the source accessor's resolver so subsequent lookups in this
+        # chain start from the now-expanded registry.
+        pr._sync_registry(target_registry)
+
+        if target_base_uri == self.base_uri:
+            # Same-document ref — reuse this accessor.
+            return self, result.parts
+
+        # Cross-document ref — build or retrieve a shared accessor for the
+        # target document (shared so canonical_a.accessor is canonical_b.accessor
+        # when both paths resolve to the same external schema).
+        root_schema: Any = target_registry.contents(target_base_uri)
+        target_accessor = type(self)._get_or_build_canonical(
+            root_schema, target_base_uri, target_registry
+        )
+        return target_accessor, result.parts
+
+    def _resolve_canonical(
+        self,
+        parts: tuple[LookupKey, ...],
+    ) -> tuple["SchemaAccessor", tuple[LookupKey, ...]]:
+        """Follow ``$ref`` chains from ``(self, parts)`` to their canonical
+        destination, returning ``(target_accessor, target_parts)``.
+
+        This is the core loop for :meth:`SchemaPath.canonical`.  Keeping it
+        here co-locates the hop logic, the cycle guard, and the registry
+        sync-back — all of which are accessor-level concerns — so that
+        ``SchemaPath.canonical`` only needs to translate the result into a
+        path object.
+
+        ``$dynamicRef`` is not followed (see ``SchemaPath.canonical``
+        docstring for rationale).
+
+        After a cross-document traversal the originating accessor's registry
+        is synced with the final destination's registry.  This ensures that a
+        subsequent call from the same document finds any newly loaded schemas
+        already in the registry lineage, which stabilises
+        ``registry.contents(uri)`` object identity — a requirement for the
+        ``_canonical_cache`` key to hit correctly.
+        """
+        accessor: SchemaAccessor = self
+        # Track (id(accessor), parts) pairs already visited so $ref cycles
+        # terminate.  id() is safe: this loop is synchronous so no GC can
+        # recycle an accessor's id mid-call.
+        visited: set[tuple[int, tuple[LookupKey, ...]]] = set()
+
+        while True:
+            key = (id(accessor), parts)
+            if key in visited:
+                break
+            visited.add(key)
+
+            raw_node = raw_lookup(accessor._node, parts)
+
+            if not is_ref(raw_node):
+                break
+
+            # $dynamicRef is intentionally not followed — its target is
+            # scope-dependent and cannot be resolved statically.  When only
+            # $dynamicRef is present, is_ref() returns False and the loop
+            # already broke above.  When both $ref and $dynamicRef coexist,
+            # we refuse to follow either rather than silently return a result
+            # the schema author did not intend.
+            if "$dynamicRef" in raw_node:
+                break
+
+            ref: str = raw_node["$ref"]
+            accessor, parts = accessor._resolve_ref_hop(ref)
+
+        # Propagate documents loaded during this traversal back to the
+        # originating accessor's registry (see docstring).
+        if accessor is not self:
+            self._path_resolver._sync_registry(
+                registry_of(accessor._path_resolver.resolver)
+            )
+
+        return accessor, parts
 
     def __init__(
         self,
@@ -113,7 +280,7 @@ class SchemaAccessor(LookupAccessor):
 
     @property
     def base_uri(self) -> str:
-        return self._path_resolver.resolver._base_uri
+        return base_uri_of(self._path_resolver.resolver)
 
     @property
     def resolver(self) -> Resolver[Schema]:
@@ -218,14 +385,9 @@ class SchemaAccessor(LookupAccessor):
     def get_resolved(self, parts: Sequence[LookupKey]) -> Resolved[LookupNode]:
         cached_resolved = self._resolved_cache.get(parts)
         if cached_resolved is not None:
-            # Read `_registry` directly: it is a stable attrs-backed
-            # attribute on every supported referencing version (the
-            # import-time `assert_referencing_layout` guarantees this)
-            # and a plain attribute access is ~30ns vs ~100ns through a
-            # helper with isinstance dispatch. The cold-path field
-            # *write* still goes through `rebind_resolved`.
-            current_registry = self._path_resolver.resolver._registry
-            if cached_resolved.resolver._registry is current_registry:
+            # The cold-path write goes through `rebind_resolved`.
+            current_registry = registry_of(self._path_resolver.resolver)
+            if registry_of(cached_resolved.resolver) is current_registry:
                 return cached_resolved
             # Rebind to the current registry rather than discard. Safe
             # under monotonic registry growth (see caches.py docstring).

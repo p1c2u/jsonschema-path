@@ -268,3 +268,52 @@ class SchemaPath(AccessorPath[SchemaNode, SchemaKey, SchemaValue]):
         assert isinstance(self.accessor, SchemaAccessor)
         with self.accessor.resolve(self.parts) as resolved:
             yield resolved
+
+    def canonical(self) -> SchemaPath:
+        """Return a SchemaPath whose ``parts`` are the JSON pointer of the
+        resolved target node, collapsing ``$ref`` navigation.
+
+        Analogous to :meth:`pathlib.Path.resolve`: follows ``$ref``
+        indirections (as symlinks are followed) and returns the path of the
+        node they ultimately point to.
+
+        Two SchemaPaths with equal ``canonical()`` refer to the same resolved
+        node regardless of the navigation path that reached them.  Use as a
+        cache key for content-level memoisation (where "the answer depends
+        only on *what* the schema is, not *how* we got here").  For
+        context-aware uses such as error reporting or discriminator
+        resolution, use the SchemaPath directly.
+
+        The result is not cached — store it yourself if you call this in a
+        loop (``c = path.canonical()``).
+
+        Guarantees:
+
+        * **Idempotent** — ``p.canonical().canonical() == p.canonical()``.
+        * **Reachable-equivalent** — ``p.canonical().read_value() is
+          p.read_value()`` for same-document refs; value-equal for
+          cross-document refs.
+        * **Cycle-safe** — self-referential ``$ref`` schemas resolve
+          without raising or looping.
+        * **Accessor-transparent** — ``p.canonical().accessor`` may differ
+          from ``p.accessor`` when a ``$ref`` crosses a document boundary;
+          that is expected, not a bug.
+
+        Known limitation — ``$dynamicRef`` is not followed.
+        ``$dynamicRef`` is intentionally late-bound: its target depends on
+        the dynamic scope at validation time and cannot be determined from
+        the document structure alone.  A path whose node contains only
+        ``$dynamicRef`` (no ``$ref``) is returned as-is.
+
+        Raises :class:`referencing.exceptions.Unresolvable` if a ``$ref``
+        target cannot be reached; wrap the call if you need to handle that.
+        """
+        assert isinstance(self.accessor, SchemaAccessor)
+        accessor, parts = self.accessor._resolve_canonical(self.parts)
+        if accessor is self.accessor and parts == self.parts:
+            return self
+        return type(self)._from_parsed_parts(
+            parts=parts,
+            separator=self.separator,
+            accessor=accessor,
+        )

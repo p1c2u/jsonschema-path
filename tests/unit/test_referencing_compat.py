@@ -99,7 +99,7 @@ class TestRegistryOf:
         resolved = resolver.lookup("a://1")
 
         assert isinstance(resolved, Resolved)
-        assert registry_of(resolved) is resolved.resolver._registry
+        assert registry_of(resolved.resolver) is resolved.resolver._registry
 
 
 class TestBaseUriOf:
@@ -112,7 +112,7 @@ class TestBaseUriOf:
         resolver, _ = _build_resolver({"a://1": {"v": 1}})
         resolved = resolver.lookup("a://1")
 
-        assert base_uri_of(resolved) == resolved.resolver._base_uri
+        assert base_uri_of(resolved.resolver) == resolved.resolver._base_uri
 
 
 class TestAssertReferencingLayout:
