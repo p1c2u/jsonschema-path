@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 from referencing import Specification
+from referencing.exceptions import Unresolvable
 
 from jsonschema_path.accessors import SchemaAccessor
 from jsonschema_path.paths import SchemaPath
@@ -420,3 +421,254 @@ class TestSchemaPathParseArgs:
     def test_raises_on_unsupported_type(self):
         with pytest.raises(TypeError):
             SchemaPath._parse_args([object()])
+
+
+class TestSchemaPathCanonical:
+    def test_on_plain_schema(self):
+        path = SchemaPath.from_dict({"type": "object"})
+
+        assert path.canonical() is path
+
+    def test_single_ref(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#/$defs/A"},
+                "$defs": {"A": {"type": "string"}},
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("$defs", "A")
+
+    def test_chained_ref(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#/$defs/A"},
+                "$defs": {
+                    "A": {"$ref": "#/$defs/B"},
+                    "B": {"$ref": "#/$defs/C"},
+                    "C": {"type": "string"},
+                },
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("$defs", "C")
+
+    def test_recursive_ref(self):
+        path = SchemaPath.from_dict({"node": {"$ref": "#/node"}}) / "node"
+
+        canonical = path.canonical()
+
+        assert canonical == path
+        assert path.canonical() is canonical
+        assert canonical.canonical() == canonical
+
+    def test_cross_path_collapse(self):
+        path = SchemaPath.from_dict(
+            {
+                "properties": {"name": {"$ref": "#/$defs/Name"}},
+                "$defs": {
+                    "Alias": {"$ref": "#/$defs/Name"},
+                    "Name": {"type": "string"},
+                },
+            }
+        )
+
+        via_property = path / "properties" / "name"
+        via_alias = path / "$defs" / "Alias"
+
+        assert via_property.canonical() == via_alias.canonical()
+        assert via_property.canonical().parts == ("$defs", "Name")
+
+    def test_reaches_same_node(self):
+        schema = {
+            "x": {"$ref": "#/$defs/A"},
+            "$defs": {"A": {"type": "string"}},
+        }
+        path = SchemaPath.from_dict(schema) / "x"
+
+        assert path.canonical().read_value() is path.read_value()
+
+    def test_idempotent(self):
+        path = (
+            SchemaPath.from_dict(
+                {
+                    "x": {"$ref": "#/$defs/A"},
+                    "$defs": {"A": {"type": "string"}},
+                }
+            )
+            / "x"
+        )
+
+        canonical = path.canonical()
+
+        assert canonical.canonical() is canonical
+
+    def test_boolean_schema(self):
+        path = (
+            SchemaPath.from_dict(
+                {
+                    "x": {"$ref": "#/$defs/Flag"},
+                    "$defs": {"Flag": True},
+                }
+            )
+            / "x"
+        )
+
+        assert path.canonical().read_value() is True
+
+    def test_sibling_keys_follow_ref(self):
+        path = (
+            SchemaPath.from_dict(
+                {
+                    "x": {
+                        "$ref": "#/$defs/A",
+                        "description": "ignored by implicit dereferencing",
+                    },
+                    "$defs": {"A": {"type": "string"}},
+                }
+            )
+            / "x"
+        )
+
+        assert path.canonical().parts == ("$defs", "A")
+        assert path.canonical().read_value() is path.read_value()
+
+    def test_canonical_parts_hashable_and_equal(self):
+        path = SchemaPath.from_dict(
+            {
+                "properties": {"name": {"$ref": "#/$defs/Name"}},
+                "$defs": {
+                    "Alias": {"$ref": "#/$defs/Name"},
+                    "Name": {"type": "string"},
+                },
+            }
+        )
+
+        via_property = path / "properties" / "name"
+        via_alias = path / "$defs" / "Alias"
+
+        hash((via_property.canonical().parts,))
+        assert via_property.canonical().parts == via_alias.canonical().parts
+
+    def test_missing_ref_target_raises(self):
+        path = SchemaPath.from_dict({"x": {"$ref": "#/$defs/Missing"}}) / "x"
+
+        with pytest.raises(Unresolvable):
+            path.canonical()
+
+    def test_array_pointer_uses_integer_path_part(self):
+        path = (
+            SchemaPath.from_dict(
+                {
+                    "x": {"$ref": "#/items/0"},
+                    "items": [{"type": "string"}],
+                }
+            )
+            / "x"
+        )
+
+        assert path.canonical().parts == ("items", 0)
+        assert path.canonical().read_value() == {"type": "string"}
+
+    def test_empty_key_pointer_is_not_root(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#/"},
+                "": {"type": "null"},
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("",)
+        assert (path / "x").canonical().read_value() is (
+            path / "x"
+        ).read_value()
+
+    def test_percent_decodes_pointer_fragment(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#/a%20b"},
+                "a b": {"type": "string"},
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("a b",)
+        assert (path / "x").canonical().read_value() is (
+            path / "x"
+        ).read_value()
+
+    def test_decodes_escaped_pointer_tokens(self):
+        path = SchemaPath.from_dict(
+            {
+                "slash": {"$ref": "#/a~1b"},
+                "tilde": {"$ref": "#/c~0d"},
+                "a/b": {"type": "string"},
+                "c~d": {"type": "integer"},
+            }
+        )
+
+        assert (path / "slash").canonical().parts == ("a/b",)
+        assert (path / "tilde").canonical().parts == ("c~d",)
+
+    def test_anchor_fragment(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#target"},
+                "$defs": {
+                    "Target": {
+                        "$anchor": "target",
+                        "type": "string",
+                    }
+                },
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("$defs", "Target")
+        assert (path / "x").canonical().read_value() is (
+            path / "x"
+        ).read_value()
+
+    def test_dynamic_anchor_fragment(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#target"},
+                "$defs": {
+                    "Target": {
+                        "$dynamicAnchor": "target",
+                        "type": "string",
+                    }
+                },
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("$defs", "Target")
+
+    def test_anchor_scan_skips_embedded_resources(self):
+        path = SchemaPath.from_dict(
+            {
+                "x": {"$ref": "#target"},
+                "$defs": {
+                    "OtherResource": {
+                        "$id": "other",
+                        "$anchor": "target",
+                        "type": "number",
+                    },
+                    "Target": {
+                        "$anchor": "target",
+                        "type": "string",
+                    },
+                },
+            }
+        )
+
+        assert (path / "x").canonical().parts == ("$defs", "Target")
+
+    def test_missing_anchor_raises(self):
+        """A $ref with an anchor fragment that does not exist in the document
+        must raise Unresolvable rather than silently resolving to the document
+        root."""
+        path = (
+            SchemaPath.from_dict({"x": {"$ref": "#nonExistentAnchor"}}) / "x"
+        )
+
+        with pytest.raises(Unresolvable):
+            path.canonical()

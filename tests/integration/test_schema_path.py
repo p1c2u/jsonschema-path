@@ -1,3 +1,5 @@
+import gc
+import weakref
 from io import BytesIO
 from json import dumps
 from unittest import mock
@@ -404,3 +406,125 @@ class TestSchemaPathOpen:
             assert resolved.contents == expected_contents
         with property_schema_path.open() as contents:
             assert contents == expected_contents
+
+
+class TestSchemaPathCanonical:
+    def test_external_ref(self, create_file):
+        target = {
+            "Thing": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+            }
+        }
+        target_file = create_file(target)
+        path = SchemaPath.from_dict(
+            {
+                "properties": {
+                    "a": {"$ref": f"{target_file}#/Thing"},
+                    "b": {"$ref": f"{target_file}#/Thing"},
+                }
+            },
+            base_uri="file:///",
+        )
+
+        first = (path / "properties" / "a").canonical()
+        second = (path / "properties" / "b").canonical()
+
+        assert first.accessor is not path.accessor
+        assert first.accessor is second.accessor
+        assert first == second
+        assert first.parts == ("Thing",)
+        assert first.read_value() == target["Thing"]
+
+    def test_direct_and_indirect_refs_share_accessor(self, create_file):
+        target = {"Target": {"type": "string"}}
+        target_file = create_file(target)
+        intermediate_file = create_file(
+            {"Thing": {"$ref": f"{target_file}#/Target"}}
+        )
+        path = SchemaPath.from_dict(
+            {
+                "direct": {"$ref": f"{target_file}#/Target"},
+                "via": {"$ref": f"{intermediate_file}#/Thing"},
+            },
+            base_uri="file:///",
+        )
+
+        direct = (path / "direct").canonical()
+        indirect = (path / "via").canonical()
+
+        assert direct == indirect
+        assert direct.accessor is indirect.accessor
+        assert direct.parts == indirect.parts == ("Target",)
+
+    def test_indirect_and_direct_refs_share_accessor(self, create_file):
+        target = {"Target": {"type": "string"}}
+        target_file = create_file(target)
+        intermediate_file = create_file(
+            {"Thing": {"$ref": f"{target_file}#/Target"}}
+        )
+        path = SchemaPath.from_dict(
+            {
+                "direct": {"$ref": f"{target_file}#/Target"},
+                "via": {"$ref": f"{intermediate_file}#/Thing"},
+            },
+            base_uri="file:///",
+        )
+
+        indirect = (path / "via").canonical()
+        direct = (path / "direct").canonical()
+
+        assert direct == indirect
+        assert direct.accessor is indirect.accessor
+        assert direct.parts == indirect.parts == ("Target",)
+
+    def test_external_anchor_matches_pointer(self, create_file):
+        target = {
+            "Thing": {
+                "$anchor": "thing",
+                "type": "string",
+            }
+        }
+        target_file = create_file(target)
+        path = SchemaPath.from_dict(
+            {
+                "anchor": {"$ref": f"{target_file}#thing"},
+                "pointer": {"$ref": f"{target_file}#/Thing"},
+            },
+            base_uri="file:///",
+        )
+
+        anchor = (path / "anchor").canonical()
+        pointer = (path / "pointer").canonical()
+
+        assert anchor == pointer
+        assert anchor.accessor is pointer.accessor
+        assert anchor.parts == ("Thing",)
+
+    def test_external_boolean_root(self, create_file):
+        target_file = create_file(True)
+        path = SchemaPath.from_dict(
+            {"x": {"$ref": f"{target_file}#"}},
+            base_uri="file:///",
+        )
+
+        canonical = (path / "x").canonical()
+
+        assert canonical.accessor is not path.accessor
+        assert canonical.parts == ()
+        assert canonical.read_value() is True
+
+    def test_does_not_keep_source_accessor_alive(self, create_file):
+        target_file = create_file({"Thing": {"type": "string"}})
+        path = SchemaPath.from_dict(
+            {"x": {"$ref": f"{target_file}#/Thing"}},
+            base_uri="file:///",
+        )
+        source_accessor_ref = weakref.ref(path.accessor)
+
+        canonical = (path / "x").canonical()
+        del path
+        gc.collect()
+
+        assert canonical.read_value() == {"type": "string"}
+        assert source_accessor_ref() is None

@@ -7,6 +7,7 @@ from pathable.types import LookupNode
 from referencing._core import Resolved
 from referencing._core import Resolver
 
+from jsonschema_path._referencing_compat import resolve_ref
 from jsonschema_path.typing import Schema
 from jsonschema_path.utils import is_ref
 
@@ -21,9 +22,9 @@ class SchemaNode(LookupAccessor):
         if is_ref(node):
             ref_node = cls._get_subnode(node, "$ref")
             ref = cls._read_node(ref_node)
-            resolved = resolver.lookup(ref)
+            result = resolve_ref(resolver, ref)
             return cls._resolve_node(
-                resolved.contents,
-                resolved.resolver,
+                result.resolved.contents,
+                result.resolved.resolver,
             )
         return Resolved(cast(Schema, node), resolver)  # type: ignore

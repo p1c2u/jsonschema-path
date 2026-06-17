@@ -10,6 +10,7 @@ from referencing._core import Resolver
 
 from jsonschema_path._referencing_compat import rebind_registry
 from jsonschema_path._referencing_compat import rebind_resolved
+from jsonschema_path._referencing_compat import registry_of
 from jsonschema_path.caches import PrefixResolvedCache
 from jsonschema_path.nodes import SchemaNode
 from jsonschema_path.typing import Schema
@@ -32,7 +33,7 @@ class CachedPathResolver:
         parts: Sequence[LookupKey],
     ) -> ResolveResult:
         resolved = self._resolve_with_prefix_cache(node, parts)
-        registry_changed = self._sync_registry(resolved.resolver._registry)
+        registry_changed = self._sync_registry(registry_of(resolved.resolver))
         return ResolveResult(
             resolved=resolved,
             registry_changed=registry_changed,
@@ -60,11 +61,10 @@ class CachedPathResolver:
             start, cached_resolved = cached_prefix
             # Rebind to the current registry if it grew since this prefix
             # was cached, then refresh the stored entry so subsequent hits
-            # skip the check. Reads of `_registry` go direct (cheap, plain
-            # attribute access on an attrs class); the cold-path write
-            # still goes through `rebind_resolved`.
-            current_registry = self.resolver._registry
-            if cached_resolved.resolver._registry is not current_registry:
+            # skip the check.  The cold-path write goes through
+            # `rebind_resolved`.
+            current_registry = registry_of(self.resolver)
+            if registry_of(cached_resolved.resolver) is not current_registry:
                 cached_resolved = cast(
                     Resolved[LookupNode],
                     rebind_resolved(cached_resolved, current_registry),
@@ -95,7 +95,7 @@ class CachedPathResolver:
         return resolved
 
     def _sync_registry(self, registry: Registry[LookupNode]) -> bool:
-        if registry is self.resolver._registry:
+        if registry is registry_of(self.resolver):
             return False
 
         # Rebind self.resolver so subsequent fresh resolutions start from
